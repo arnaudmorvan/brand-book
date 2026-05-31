@@ -1,0 +1,21 @@
+# Témoignages clients
+# Format : 3 témoignages structurés. Le skill les insère directement dans la section Témoignages de la landing.
+# Anonymiser si nécessaire (ex. « Directeur de cabinet, Paris »).
+
+## Témoignage 1
+Citation : [verbatim client, 3-4 lignes]
+Fonction : [ex. Directeur de cabinet]
+Lieu : [ex. Paris]
+Année : [ex. 2026]
+
+## Témoignage 2
+Citation : [verbatim client]
+Fonction :
+Lieu :
+Année :
+
+## Témoignage 3
+Citation : [verbatim client]
+Fonction :
+Lieu :
+Année :

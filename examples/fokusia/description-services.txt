@@ -1,0 +1,39 @@
+# Description des services
+# Format : remplir chaque section ci-dessous. Le skill consomme directement ce fichier pour générer brand.md + landing-page.md sans repasser par toute l'interview.
+# Lignes commençant par # sont des commentaires (ignorés par le skill).
+
+## Qui je suis
+# 1-2 phrases sur ton identité pro et ce que tu fais.
+Isabelle Marques, graphiste indépendante spécialisée dans les identités visuelles des secteurs où la discrétion fait l'autorité.
+
+## Pour qui (persona principal)
+# Décrire le client type : profil, contexte, déclic d'achat.
+Directeur ou fondateur de cabinet d'investigation privée, 10-25 ans d'expérience, qui a construit son cabinet sur le marché des particuliers et veut basculer vers le B2B corporate (DRH, direction juridique, grands comptes). Le déclic d'achat se produit quand il rate un appel d'offres grand compte à cause d'une identité visuelle datée.
+
+## Promesse principale
+# 1 phrase forte.
+Une identité visuelle qui ouvre les portes des grands comptes corporate dès le premier RDV.
+
+## Formule signature
+# 1 phrase manifeste, courte, mémorable. Apparaît en hero + CTA final.
+Je traduis la rigueur de l'investigation en autorité visuelle.
+
+## Différenciateur
+# Ce qui te rend unique vs les alternatives (studio généraliste, freelance Malt, DIY Canva).
+Spécialiste exclusive des secteurs où la discrétion fait l'autorité (investigation, cybercriminalité, cybersécurité). Pas un studio généraliste qui découvre les codes du secret professionnel sur ton projet.
+
+## Objection #1
+# Verbatim de l'objection la plus fréquente avant achat. À utiliser tel quel en FAQ Q1.
+J'ai pas le temps de m'en occuper.
+
+## Méthode / process (3 étapes)
+# Format : Étape N — Titre court : description 2-3 lignes.
+
+Étape 01 — Lecture stratégique : audit de ton image actuelle vue par un acheteur corporate. Lecture des trois points de contact prioritaires (site, carte de visite, première slide de proposition). Diagnostic restitué en un document de 4 pages avec décisions claires.
+
+Étape 02 — Construction de l'identité corporate : logotype, palette, typographie, principes de mise en page. Production du brand book de référence et de la papeterie corporate. Une seule itération validée, pas d'allers-retours en boucle.
+
+Étape 03 — Activation sur tes points de contact commerciaux : application sur le site, le modèle de proposition commerciale, le template de rapport. Tu repars avec une image cohérente sur tous les supports que voient tes prospects corporate.
+
+## CTA principal (texte du bouton)
+Réservez votre diagnostic d'image

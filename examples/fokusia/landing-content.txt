@@ -1,0 +1,106 @@
+# landing-content.txt
+# Textes ajoutés par l'IA lors de la génération de la landing.
+# Les textes issus des autres .txt sources (description-services, infos-entreprise, temoignages-clients, texte-cas-clients) ne sont PAS dans ce fichier.
+# Pour modifier : éditer ici, puis demander à l'IA « resynchronise la landing » → le skill regénère landing.html sans interview.
+# Lignes commençant par # sont des commentaires (ignorés par le skill).
+
+## Hero
+
+Eyebrow location : Paris · 2026
+Num signature : № 001 · Brand Identity Specialist
+Eyebrow domaines : Graphiste · Investigation · Avocats · Cybersécurité
+H1 condensé : Rigueur. Méthode. Autorité.
+Sous-titre : Identité visuelle pour les cabinets d'investigation, les avocats en cybercriminalité et les entreprises de cybersécurité qui veulent décrocher les contrats corporate.
+CTA secondaire : Voir les projets récents
+Scroll indicator : Scroll
+
+## Variante hero B · Question ouverte
+
+H1 : Et si votre image valait vos contrats corporate ?
+Sous-titre : La graphiste qui accompagne les cabinets d'investigation, les avocats en cybercriminalité et les entreprises de cybersécurité dans leur bascule vers le B2B grand compte.
+Pourquoi tester : Engage par une projection directe sur la conséquence business. Fonctionne sur les dirigeants qui ont déjà raté un appel d'offres récemment.
+
+## Variante hero C · Affirmation longue
+
+H1 : La rigueur de votre méthode mérite la même lecture visuelle.
+Sous-titre : Identité visuelle pour les professionnels de la discrétion qui veulent décrocher les contrats corporate. Investigation. Avocats. Cybersécurité.
+Pourquoi tester : Registre affirmation longue plus narratif que la version recommandée. Pour audience qui scroll lentement et lit avant de cliquer.
+
+## Portfolio
+
+Eyebrow section : SÉLECTION DE TRAVAUX
+H2 section : Trois projets, trois bascules vers le corporate.
+Paragraphe intro : Chaque mission documentée par son brief original et le livrable réel. Les noms des cabinets ne sont jamais communiqués sans accord explicite.
+
+## Constat
+
+Eyebrow : CE QUE NOUS OBSERVONS
+H2 : Votre expertise est en béton. Votre image, non.
+Paragraphe intro : La plupart des cabinets d'investigation et des cabinets d'avocats spécialisés en cybercriminalité que nous rencontrons partagent le même constat. Leurs interlocuteurs corporate les jugent en moins de quinze secondes. Sur leur site, sur leur carte de visite, sur leur première slide. La lecture est faite avant même qu'ils aient ouvert la bouche.
+
+Bullet 1 titre : L'image dit « particulier ».
+Bullet 1 description : Codes années 90, logo générique, papeterie sans hiérarchie. Le DRH ferme l'onglet avant le premier rendez-vous.
+
+Bullet 2 titre : L'image dit « caricature ».
+Bullet 2 description : Loupes, ombres, typographie noire et rouge agressive. Représentation littérale qui empêche d'être pris au sérieux par une direction juridique.
+
+Bullet 3 titre : L'image dit « technique seulement ».
+Bullet 3 description : Bleu vif, dégradés, icônes data. La cybersécurité confondue avec un éditeur SaaS, le positionnement commercial aligné en conséquence.
+
+Caption diptyque : Diptyque illustratif · même cabinet, deux lectures corporate.
+
+## Méthode
+
+Eyebrow : MÉTHODE FOKUSIA
+H2 : Trois étapes pour passer du marché des particuliers à la lecture corporate.
+Paragraphe intro : La méthode fokusia tient sur trois mouvements. Aucun jargon, aucune slide superflue. Vous savez à chaque étape ce qui sort, ce qui rentre, et ce que vous validez.
+
+## À propos
+
+Eyebrow : À PROPOS D'ISABELLE
+H2 : Une graphiste qui comprend les codes de la discrétion.
+
+Hook italic : Isabelle Marques accompagne les professionnels qui exercent dans les secteurs où l'image se construit par soustraction.
+
+Paragraphe 1 : Investigation privée corporate, avocats en cybercriminalité, conseil en cybersécurité. Trois métiers où montrer trop tue le contrat, où la rigueur visuelle est la première preuve de la rigueur méthodologique.
+
+Paragraphe 2 : Sa posture n'est pas celle d'un studio créatif généraliste qui découvre votre secteur sur votre dossier. C'est celle d'une partenaire stratégique qui connaît déjà les contraintes du secret professionnel, la grammaire visuelle des cabinets d'avocats d'affaires, et les codes de lecture des directions juridiques.
+
+Bullet 1 titre : Spécialiste sectorielle, pas généraliste.
+Bullet 1 description : Les codes de l'investigation, du juridique et de la cybersécurité ne s'improvisent pas projet par projet.
+
+Bullet 2 titre : Méthode et cadre, pas créativité débridée.
+Bullet 2 description : Vous savez ce qui sort à chaque étape, ce qui se valide, ce qui ne se rediscute pas.
+
+Bullet 3 titre : Cycle court, pas accompagnement sans fin.
+Bullet 3 description : L'objectif n'est pas de faire vivre un chantier, c'est de vous remettre une image que vous oubliez ensuite.
+
+## Témoignages
+
+Eyebrow : RETOURS DE CLIENTS
+H2 : Ce que les cabinets accompagnés disent de la collaboration.
+
+## FAQ
+
+Eyebrow : QUESTIONS FRÉQUENTES
+H2 : Ce que demandent les dirigeants avant de réserver un diagnostic.
+
+Q1 réponse : La méthode fokusia est calibrée précisément pour les dirigeants solo qui sont sur le terrain. Le diagnostic d'image se restitue en 45 minutes. La construction de l'identité corporate demande deux rendez-vous d'une heure de votre côté, étalés sur trois à quatre semaines, pas davantage. Les allers-retours créatifs en boucle ne font pas partie de la méthode : une seule itération est validée, et on avance.
+
+Q2 question : Vous comprenez vraiment notre secteur, ou c'est un argument marketing ?
+Q2 réponse : fokusia accompagne exclusivement trois secteurs : l'investigation privée corporate, les cabinets d'avocats en cybercriminalité, et les entreprises de cybersécurité. Les autres demandes sont systématiquement déclinées. La spécialisation se traduit concrètement par la connaissance des codes de discrétion, la lecture corporate attendue par les DRH et les directions juridiques, et la culture du secret professionnel qui n'est jamais transgressée dans les visuels ou les supports.
+
+Q3 question : Mon image actuelle a coûté cher. Pourquoi je devrais tout refaire ?
+Q3 réponse : Le diagnostic d'image initial répond précisément à cette question. Dans certains cas, une refonte complète n'est pas nécessaire : trois ou quatre supports stratégiques suffisent à corriger la lecture corporate. Dans d'autres, la refonte est inévitable parce que l'identité actuelle bloque les rendez-vous grands comptes. La décision se prend après le diagnostic, jamais avant.
+
+Q4 question : Vous travaillez avec des cabinets concurrents directs ? Quelle confidentialité ?
+Q4 réponse : La règle est simple. fokusia ne travaille jamais avec deux cabinets directement concurrents sur le même marché géographique et le même segment. Chaque mission fait l'objet d'un engagement écrit de non-concurrence pour la durée de la collaboration et les douze mois suivants. La liste des cabinets accompagnés n'est communiquée à personne, sauf accord explicite.
+
+Q5 question : Vous livrez seule ou en équipe ?
+Q5 réponse : La méthode est pilotée et exécutée par Isabelle Marques en direct. Vous échangez avec une seule interlocutrice du diagnostic à la livraison. Pour les productions techniques annexes (impression, développement web ponctuel), des partenaires spécialisés interviennent sous brief précis, jamais sur la stratégie d'image elle-même.
+
+## CTA final
+
+Eyebrow : DIAGNOSTIC D'IMAGE
+Sous-titre : Quarante-cinq minutes en visio. Un diagnostic restitué par écrit. Aucune obligation de poursuivre. Vous repartez avec une lecture précise de votre image vue par un acheteur corporate.
+Lien secondaire prefix : Ou écrivez à

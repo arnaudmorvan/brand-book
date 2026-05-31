@@ -1,0 +1,28 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Fichiers intermédiaires de génération d'image
+Gemini_Generated_Image_*.png
+midjourney_*.png
+
+# Fichiers temporaires de skill (re-générés à chaque session)
+.skill-cache/
+*.tmp
+
+# Sessions Claude / archives locales
+SKILL_PATCH.md
+*.bak-*
+
+# Variables d'environnement
+.env
+.env.local

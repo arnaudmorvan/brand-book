@@ -1,0 +1,21 @@
+# Témoignages clients
+# Format : 3 témoignages structurés. Le skill les insère directement dans la section Témoignages de la landing.
+# Anonymiser si secret professionnel (ex. « Directeur de cabinet d'investigation, Paris »).
+
+## Témoignage 1
+Citation : Le diagnostic d'image a fait plus pour notre repositionnement que dix mois de prospection. Nous avons signé notre premier mandat corporate avant même la fin du chantier identité.
+Fonction : Directeur de cabinet d'investigation
+Lieu : Paris
+Année : 2025
+
+## Témoignage 2
+Citation : Le résultat ne ressemble à rien d'autre dans ma profession. C'est précisément ce que je cherchais. Une lecture de cabinet d'avocats d'affaires, pas une lecture de site de freelance.
+Fonction : Avocate associée
+Lieu : Lyon
+Année : 2025
+
+## Témoignage 3
+Citation : Isabelle a compris en une heure ce que trois agences précédentes n'avaient pas saisi en six mois. Quand un acheteur ouvre maintenant notre dossier, il ne nous compare plus à un éditeur SaaS.
+Fonction : Dirigeant ESN cybersécurité
+Lieu : Région parisienne
+Année : 2024

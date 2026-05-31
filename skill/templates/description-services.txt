@@ -1,0 +1,39 @@
+# Description des services
+# Format : remplir chaque section ci-dessous. Le skill consomme directement ce fichier pour générer brand.md + landing-page.md sans repasser par toute l'interview.
+# Lignes commençant par # sont des commentaires (ignorés par le skill).
+
+## Qui je suis
+# 1-2 phrases sur ton identité pro et ce que tu fais.
+[À remplir]
+
+## Pour qui (persona principal)
+# Décrire le client type : profil, contexte, déclic d'achat.
+[À remplir]
+
+## Promesse principale
+# 1 phrase forte.
+[À remplir]
+
+## Formule signature
+# 1 phrase manifeste, courte, mémorable. Apparaît en hero + CTA final.
+[À remplir]
+
+## Différenciateur
+# Ce qui te rend unique vs les alternatives (studio généraliste, freelance, DIY).
+[À remplir]
+
+## Objection #1
+# Verbatim de l'objection la plus fréquente avant achat. À utiliser tel quel en FAQ Q1.
+[À remplir]
+
+## Méthode / process (3 étapes)
+# Format : Étape N — Titre court : description 2-3 lignes.
+
+Étape 01 — [Titre] : [description]
+
+Étape 02 — [Titre] : [description]
+
+Étape 03 — [Titre] : [description]
+
+## CTA principal (texte du bouton)
+[À remplir, ex : Réservez votre diagnostic]

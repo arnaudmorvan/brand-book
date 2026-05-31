@@ -1,0 +1,42 @@
+# Prérequis légaux
+
+## Éditeur
+
+Forme juridique :
+Dénomination légale :
+Nom commercial :
+Capital social :
+RCS :
+SIRET :
+Code APE :
+TVA intracommunautaire :
+Adresse siège social :
+Email contact :
+Téléphone :
+Directeur de la publication :
+
+## Hébergeur
+
+Nom :
+Raison sociale :
+Adresse :
+Téléphone :
+
+## RGPD
+
+Responsable du traitement :
+Email RGPD :
+DPO :
+Fournisseur email pro :
+Outil de prise de RDV :
+Outil de facturation :
+CRM :
+Outil de signature électronique :
+Analytics :
+
+## Liens
+
+URL Calendly :
+Email contact (footer) :
+URL LinkedIn perso :
+URL LinkedIn entreprise :

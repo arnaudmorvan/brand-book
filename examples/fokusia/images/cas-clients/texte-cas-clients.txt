@@ -1,0 +1,25 @@
+# Cas clients (portfolio · 3 projets phares)
+# Format : 3 cas structurés correspondant aux images cas1.jpg, cas2.jpg, cas3.jpg du même dossier.
+# Le skill les insère directement dans la section Portfolio de la landing.
+# Marquer "INVENTÉ" en fin de titre si projet placeholder à remplacer plus tard.
+
+## Cas 1
+Titre : Cabinet Dérivière & Associés
+Secteur : Investigation corporate
+Année : 2025
+Brief original : Cabinet d'investigation parisien historique, vingt ans d'expérience sur le marché des particuliers (recherche, vérification, infidélité). Volonté de basculer 70% du chiffre vers le corporate (DRH, direction juridique, cabinets d'avocats d'affaires) en deux ans. Identité visuelle existante datée, codes années 90, illisible pour un acheteur grand compte.
+Ce qui a été livré : Refonte complète du logotype, palette éditoriale crème/teal/bordeaux, charte typographique Playfair Display + Inter, brand book de 32 pages, papeterie corporate (papier en-tête, carte de visite, dossier client), modèle de proposition commerciale et template de rapport d'investigation. Premier contrat grand compte signé deux mois après le lancement.
+
+## Cas 2
+Titre : Maître Lavanchy, cabinet en cybercriminalité
+Secteur : Avocats
+Année : 2025
+Brief original : Avocate indépendante spécialisée en cybercriminalité, atteintes à la e-reputation et fraude numérique. Clientèle visée : dirigeants victimes d'usurpation, entreprises post-incident, particuliers haut patrimoine. Besoin d'une identité qui inspire confiance immédiate et discrétion totale.
+Ce qui a été livré : Monogramme épuré, charte couleur à deux teintes plus accent chirurgical, mise en page systématique des correspondances (mémos, conclusions, factures d'honoraires), site one-pager statique aux codes éditoriaux. Première recommandation d'un cabinet d'avocats associé survenue dans le trimestre.
+
+## Cas 3
+Titre : Argentic Security, conseil cybersécurité grand compte
+Secteur : Cybersécurité B2B
+Année : 2024
+Brief original : ESN de cybersécurité, 12 consultants senior, cible exclusive CSO et directions juridiques de grands comptes français. Identité initiale techno-générique (bleu vif, dégradés, icônes data) qui les classait dans la même catégorie que des outils SaaS. Volonté d'un repositionnement « cabinet de conseil » et non « éditeur ».
+Ce qui a été livré : Refonte logotype, palette monochrome teal + accent rouge ponctuel, système de slides corporate complet, template de rapport d'audit, charte LinkedIn pour les consultants. Le repositionnement a permis d'aligner le positionnement commercial sur celui d'un cabinet de conseil traditionnel.

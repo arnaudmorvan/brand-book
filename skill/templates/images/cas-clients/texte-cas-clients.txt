@@ -1,0 +1,25 @@
+# Cas clients (portfolio · 3 projets phares)
+# Format : 3 cas structurés correspondant aux images cas1.jpg, cas2.jpg, cas3.jpg du même dossier.
+# Le skill les insère directement dans la section Portfolio de la landing.
+# Marquer "INVENTÉ" en fin de titre si projet placeholder à remplacer plus tard.
+
+## Cas 1
+Titre : [Nom du projet]
+Secteur : [Secteur d'activité]
+Année : [YYYY]
+Brief original : [Contexte du client + besoin initial, 2-3 lignes]
+Ce qui a été livré : [Livrables + résultats si dispo, 2-3 lignes]
+
+## Cas 2
+Titre :
+Secteur :
+Année :
+Brief original :
+Ce qui a été livré :
+
+## Cas 3
+Titre :
+Secteur :
+Année :
+Brief original :
+Ce qui a été livré :
