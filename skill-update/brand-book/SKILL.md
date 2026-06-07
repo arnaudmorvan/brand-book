@@ -1,19 +1,21 @@
 ---
 name: brand-book
 description: >
-  Pipeline charte de marque. Interview 18 questions (5 vagues : positionnement,
-  ton, typo, univers, persona), écrit `brand.md` et `landing-page.md` (copy
-  rédigée + 3 templates auto : offre/SaaS B2B, produit, personal brand —
-  prêt à coller comme prompt), génère brochure Figma 15 slides 1920×1280
-  dont le design s'adapte aux réponses. Détecte automatiquement les logos
-  (nodes "Logo couleur" + "Logo blanc" sur Page 1 du fichier Figma cible)
-  et scanne `./images/` du dossier projet — pas d'upload manuel. CRÉATION : "scan ma charte", "crée le brand system", "j'ai un
-  logo", "génère brand.md", "fais le brand book", "brand setup", "structure
-  ma landing", "page de vente de la marque". BOOK (brand.md existe) :
-  "brand guidelines propre", "brand book Figma", "transforme mes tokens en
-  brand book". LANDING (brand.md existe) : "refais la landing", "structure
-  ma page de vente", "génère landing-page.md". Pour produire du contenu
-  (LinkedIn, PPTX) sans brand.md — lancer CRÉATION d'abord.
+  Pipeline charte de marque. Interview 18 questions (5 vagues), écrit
+  `brand.md` + `landing-page.md` (copy rédigée, 3 templates), génère
+  brochure Figma 15 slides 1920×1280 éditoriale : slots images MoodBoard
+  sur chaque slide, 5 presets visuels adaptatifs (Luxe éditorial, Minimal
+  tech, Crème organique, Pop contrasté, Corporate clair) selon les
+  réponses. Détecte logos (nodes "Logo couleur"/"Logo blanc") et images
+  (nodes "IMG · slot") sur Page 1 du Figma cible, pas d'upload. Slots
+  vides = placeholder dégradé + images-brief.md (prompts IA). CRÉATION :
+  "scan ma charte", "crée le brand system", "j'ai un logo", "génère
+  brand.md", "fais le brand book", "brand setup", "structure ma landing",
+  "page de vente de la marque". BOOK (brand.md existe) : "brand
+  guidelines propre", "brand book Figma", "transforme mes tokens en brand
+  book". LANDING : "refais la landing", "structure ma page de vente",
+  "génère landing-page.md". Contenu (LinkedIn, PPTX) sans brand.md :
+  lancer CRÉATION d'abord.
 ---
 
 # Skill : brand-book
@@ -108,6 +110,23 @@ placement (slides 01, 06, 15).
 Le skill n'utilise **jamais** d'upload ponctuel : si un node logo manque
 dans le Figma cible (ou si une image manque dans `./images/`), il
 demande à l'utilisateur de le déposer avant de continuer.
+
+**Images du brand book — même logique que les logos.** L'upload
+programmatique étant bloqué (cf. Why ci-dessus), les photos qui habillent
+les slides suivent la même convention : des nodes posés sur Page 1 du
+Figma cible, nommés `IMG · <slot>` (ex : `IMG · cover`,
+`IMG · chapitre-logo`, `IMG · univers-3`). Le skill les détecte en
+A.1.a.bis et les clone dans les slides via le helper `placeImage()`
+(Étape 5). **Aucun node image n'est obligatoire** : chaque slot absent
+est rendu en placeholder dégradé aux couleurs de la marque (nommé
+`MoodBoard · <slot>` dans Figma), prêt pour un drag-drop ultérieur, et
+listé dans `images-brief.md` avec un prompt IA prêt à coller
+(Midjourney / Imagen / Firefly). Le registre complet des slots est à
+l'Étape 5 (« Registre des slots images »).
+
+Le dossier local `./images/` reste réservé à la **landing HTML**
+(hero.jpg, photo-profil.jpg, cas clients) — il n'alimente pas le brand
+book Figma, faute d'upload possible.
 
 ---
 
@@ -251,6 +270,36 @@ Cas possibles :
 | Aucun node logo | **Bloquer la génération** et demander à l'utilisateur de coller son logo SVG dans le Figma cible (Page 1) et de le nommer `Logo couleur`. |
 | Fichier Figma totalement vide | Stopper et expliquer : « Le fichier Figma cible est vide. Colle ton logo (au moins la variante couleur) sur Page 1 avant de relancer le skill. »  |
 
+### A.1.a.bis — Détection des images `IMG · <slot>` dans le Figma cible
+
+Dans le même appel que la détection des logos, scanner Page 1 (et une
+éventuelle page « Assets ») pour les nodes images déposés par
+l'utilisateur :
+
+```js
+// Convention : "IMG · cover", "IMG · univers-1", "img-chapitre-logo"…
+const IMG_RE = /^img[\s·:\-]+(.+)$/i;
+const IMG_TPLS = {};
+for (const pg of [homePage, figma.root.children.find(p => /assets/i.test(p.name))]) {
+  if (!pg) continue;
+  pg.children.forEach(n => {
+    const m = n.name.trim().match(IMG_RE);
+    if (m) IMG_TPLS[m[1].trim().toLowerCase()] = n;
+  });
+}
+```
+
+Chaque clé de `IMG_TPLS` correspond à un slot du « Registre des slots
+images » (Étape 5). Les slots non couverts ne bloquent **jamais** la
+génération : ils sont rendus en placeholder dégradé et documentés dans
+`images-brief.md` (Étape 9ter). Annoncer le résultat du scan au
+démarrage, en une ligne :
+
+```
+✦ Images détectées dans le Figma : 4/16 slots (cover, identite, univers-1, univers-2)
+  Les 12 autres seront générés en placeholders + images-brief.md
+```
+
 ### A.1.b — Scan des images
 
 Lister le contenu de `./images/` :
@@ -272,12 +321,22 @@ Une fois les dossiers scannés, vérifier dans la conversation :
 
 | Input | Obligatoire | Source par défaut |
 |---|---|---|
-| Nom de la marque | Oui | Demander si absent |
+| **Nom de la marque** | **Oui — bloquant** | Brief / conversation / `description-services.txt` / titre de `brand.md`. Si absent : **demander en intro, avant la Vague 1** |
 | Couleur(s) principale(s) | Oui (min. 1 hex) | Demander si absent, ou extraire visuellement depuis le node `Logo couleur` via `get_screenshot` (rendu Figma natif) |
 | Positionnement / cible court | Recommandé | Brief, profil LinkedIn, conversation |
 
 Si nom ou couleurs manquent, poser **une seule question groupée** pour
-tout récupérer d'un coup.
+tout récupérer d'un coup, **avant de lancer l'interview**.
+
+**Le nom de la marque est une variable, jamais un exemple.** Stocker la
+réponse dans `BRAND_NAME` : c'est elle qui alimente le titre cover, le
+footer des 15 slides, les crédits de la slide 15, le titre de `brand.md`
+et de `images-brief.md`. Les noms qui apparaissent dans ce SKILL.md
+(fokusia, Max Piccinini, PICCININI) sont des **exemples de documentation**
+: si l'un d'eux se retrouve dans un livrable, c'est un bug (cf.
+guardrail ⑰). En mode BOOK, `BRAND_NAME` se lit dans le titre
+`# Brand Identity — [Nom]` de `brand.md` ; s'il est introuvable, le
+demander avant de générer la moindre slide.
 
 ### A.1.d — Préparer les templates logo pour clonage
 
@@ -326,24 +385,14 @@ les insérer dans chaque slide sans casser l'original.
 placeholder. Le brand book affiche **toujours le vrai logo de la marque**
 — sinon le livrable n'a aucune valeur de présentation.
 
-### A.1.e — Préparer les images pour Figma et la landing
+### A.1.e — Préparer les images pour la landing (pas pour Figma)
 
-Pour chaque image présente dans `AVAILABLE_IMAGES`, **uploader vers Figma**
-au début de la Phase B (un seul appel `upload_assets` batché) et stocker
-les hashs dans une map :
-
-```js
-const IMAGE_HASHES = {
-  "hero.jpg": "abc123…",
-  "photo-profil.jpg": "def456…",
-  // ...
-};
-```
-
-**Usage dans le brand book Figma** : la slide 04 Universe & Mood peut
-piocher dans ces images pour son moodboard (3-4 visuels en grille) si elles
-correspondent à l'ambiance Q11+Q12. Sinon, garder les blocs colorés du
-template.
+Les images de `AVAILABLE_IMAGES` servent **uniquement à la landing**.
+Ne pas tenter `upload_assets` vers Figma : l'upload est bloqué côté
+sandbox (HTTP 403, cf. « Why » en tête de skill) et l'échec silencieux
+coûte un appel + un timeout. **Usage dans le brand book Figma** : aucun.
+Les images du book passent exclusivement par les nodes `IMG · <slot>`
+détectés en A.1.a.bis, sinon placeholders dégradés.
 
 **Usage dans `landing-page.md`** : voir l'Étape A.5.c.bis ci-dessous —
 chaque image dispo est référencée **par son chemin** (`./images/hero.jpg`)
@@ -734,6 +783,7 @@ si l'utilisateur le précise). Template complet :
 **Référence d'univers** : [Q12]
 **Style d'imagerie** : [Q13]
 **Personnalité graphique en mots-clés** : [Q14]
+**Preset visuel** : [sélectionné en Phase B Étape 4bis : Luxe éditorial / Minimal tech / Crème organique / Pop contrasté / Corporate clair]
 
 **Moodboard** :
 [3-5 lignes décrivant l'univers visuel construit depuis Q11→Q14,
@@ -1818,8 +1868,9 @@ Pas de va-et-vient.
 Exemple :
 > Pour générer le brand book j'ai besoin de :
 > 1. L'URL du fichier Figma cible
-> 2. Le handle à afficher en footer (ex: @nom-de-la-marque)
-> 3. Confirmer le nombre de couleurs à exposer en palette (4, 5 ou 6)
+> 2. Confirmer le nombre de couleurs à exposer en palette (4, 5 ou 6)
+> 3. (mode BOOK sans preset dans brand.md) Confirmer le preset visuel
+>    inféré : [preset] — ou en choisir un autre parmi les 5
 
 ---
 
@@ -1829,23 +1880,27 @@ Le brand book final contient **15 slides** 1920×1280. Chaque slide
 réutilise la composition d'un YAML template, en y injectant les tokens
 du brand actuel + les réponses de l'interview (Phase A.2).
 
-| # | Slide | Tokens / contenu injectés |
-|---|---|---|
-| 01 | Cover | `cream` ou `primaryDark` (bg) + `accent` (eyebrow) + nom marque (Bold) + tagline + formule signature XXL |
-| 02 | Sommaire | Liste des **5 chapitres** avec numéros 01/02/03/04/05 — fond `cream` |
-| 03 | **Verbal Identity** | Ton dominant + formule signature en grand (H1 80-120px) + 2 colonnes **Mots à utiliser** / **Mots à éviter** (barrés) + 3 CTAs exemples + ligne posture |
-| 04 | **Universe & Mood** | Fond `primary` ou `primaryDark` (immersif) — référence univers + ambiance + imagerie + 3-5 chips mots-clés + paragraphe moodboard depuis `brand.md` |
-| 05 | Chapter opener — Logo | Fond `accent`, titre **"Logo"** sur une seule ligne (mot entier, jamais coupé), taille adaptée pour tenir dans la largeur disponible + sommaire chapitre |
-| 06 | Content — Logo | Variantes du logo (couleur, blanc, sur primary) + safe zone + min size "128px / 35mm" |
-| 07 | Chapter opener — Couleur | Fond `primary`, titre **"Couleur"** sur une seule ligne (jamais coupé) |
-| 08 | Content — Palette de couleurs | 4-6 **colonnes 224-251×960 cornerRadius 24** côte à côte — chaque colonne = un fond couleur + nom + CMYK + HEX + RGB |
-| 09 | Content — Nuances | Échelle de tints pour `primary` et `accent` (100/80/60/40/20) — 2 lignes de 5 carrés cornerRadius 24, **opacité vraiment appliquée sur le fill** |
-| 10 | Chapter opener — Typographie | Fond `accent`, titre **"Typographie"** sur une seule ligne (jamais coupé) |
-| 11 | Content — Police | Fond `primary` ou `primaryDark` — "Aa" géant 480px + alphabet complet + nom de la typeface |
-| 12 | Content — Hiérarchie typographique | Cascade H1→Small avec specs (taille / interligne / graisse) et phrases d'exemple issues de `brand.md` |
-| 13 | Chapter opener — Système | Fond `primaryDark`, titre **"Système"** sur une seule ligne (jamais coupé) |
-| 14 | Content — Éléments clés | 6 cards 3×2 (cornerRadius 16) depuis la liste **Composition rules** de `brand.md` |
-| 15 | Back cover | Fond `primaryDark` + formule signature en titre XXL + crédits + mention "brand-book skill" |
+| # | Slide | Tokens / contenu injectés | Slots images |
+|---|---|---|---|
+| 01 | Cover | Fond preset + eyebrow `IDENTITÉ DE MARQUE · [année]` + logo + nom marque XXL + accent line + formule signature | `cover` (bande droite pleine hauteur) |
+| 02 | Sommaire | Liste des **5 chapitres** numéros + intitulés à gauche, descriptions + hairlines à droite | `sommaire-1`→`sommaire-5` (collage central) |
+| 03 | **Verbal Identity** | Ton dominant + formule signature en grand + 2 colonnes **Mots à utiliser** / **Mots à éviter** (barrés) + 3 CTAs exemples + ligne posture | `identite` (visuel droite) |
+| 04 | **Universe & Mood** | Fond immersif — 4 attributs (ambiance, référence, imagerie, personnalité) + citation manifeste | `univers-1`→`univers-6` (grille 3×2 labellisée) |
+| 05 | Chapter opener — Logo | Eyebrow `CHAPITRE 02` + mot **"Logo"** géant en bas-gauche + sous-titre chapitre bas-droite | `chapitre-logo` (visuel droite) |
+| 06 | Content — Logo | Variantes du logo (3 cartouches) + taille minimale + zone de protection | `logo-hero` (grand visuel haut) |
+| 07 | Chapter opener — Couleur | Eyebrow `CHAPITRE 03` + mot **"Couleur"** géant | `chapitre-couleur` (bande verticale droite) |
+| 08 | Content — Palette de couleurs | 4-6 **colonnes couleur 186×960** côte à côte — nom + HEX + RGB | `palette-col-<n>` (insert image dans chaque colonne, optionnel) |
+| 09 | Content — Nuances | Échelle de tints `primary` et `accent` (100/80/60/40/20), **opacité pré-mélangée sur le fill** | `nuances` (visuel gauche) |
+| 10 | Chapter opener — Typographie | Eyebrow `CHAPITRE 04` + mot **"Typographie"** géant | `chapitre-typo` (visuel droit, bleed haut autorisé selon preset) |
+| 11 | Content — Police | 2 « Aa » géants (display + body) + alphabet complet + noms des typefaces | `police` (visuel bas-gauche, bleed selon preset) |
+| 12 | Content — Hiérarchie typographique | Cascade Titre 1→Légende avec specs et phrases d'exemple | `hierarchie` (panneau droite pleine hauteur) |
+| 13 | Chapter opener — Système | Eyebrow `CHAPITRE 05` + mot **"Système"** géant | `chapitre-systeme` (visuel droite) |
+| 14 | Content — Éléments clés | 6 cards 3×2 depuis la liste **Composition rules** de `brand.md` | `elements` (bandeau panoramique bas) |
+| 15 | Back cover | Logo centré + **"Merci"** + formule signature + crédits | aucun |
+
+**Mots entiers, jamais coupés** : sur les chapter openers, le mot
+("Logo", "Couleur", "Typographie", "Système") tient sur une seule ligne,
+taille réduite si besoin.
 
 **Règle d'or** : chaque slide doit pouvoir être lue isolément — header
 section + titre + footer **page XX/15** + handle.
@@ -1877,23 +1932,44 @@ Sur les content sections, la colonne gauche (x=80, y=160, width=347) contient :
 ### Zone visuelle (droite)
 À partir de x=520, contenu visuel (palette, swatches, typo, logo…).
 
+### Slots images (toutes les slides sauf 15)
+Chaque slide porte 1 à 6 slots images placés via `placeImage()` (Étape 5).
+Un slot rempli = image clonée depuis le node `IMG · <slot>` du Figma
+cible. Un slot vide = rectangle dégradé aux couleurs du preset, nommé
+`MoodBoard · <slot>`, sur lequel l'utilisateur peut drag-drop une photo
+plus tard (Figma applique l'image en fill automatiquement). Les
+**débordements hors cadre** (bleed) sont autorisés sur certains slots
+(police, chapitre-typo, hierarchie) **selon le preset** : `clipsContent:
+true` sur la slide fait le rognage proprement.
+
 ### Footer (toutes les slides)
 - À y=1228, hauteur 24
-- Gauche (x=80) : handle en 16px regular — couleur `neutral.darkest`
+- Gauche (x=80) : **nom de la marque en capitales** (ex « MAX PICCININI »)
+  en 16px regular, letter-spacing 2px — couleur adaptée au fond. Le handle
+  (@marque) n'est utilisé que si l'utilisateur le demande explicitement.
 - Droite (x=1757) : "page XX/15" en 16px regular — même couleur
 
-### Chapter openers
-- Fond pleine couleur (`accent`, `primary`, `primary.dark` en alternance)
-- Grand titre Inter Display Bold, **mot entier sur une seule ligne — jamais
-  coupé en plein milieu d'un mot** (ex : "Logo", "Colour", "Typography",
-  "System"). Si le mot ne tient pas à 240px, **réduire la taille de police
-  jusqu'à ce qu'il tienne** dans la largeur utile (1760px) plutôt que le
-  casser. Échelle indicative selon le mot :
-  - 4 lettres ("Logo") → 360-400px possibles
-  - 7 lettres ("Couleur", "Système") → 260-300px
-  - 11 lettres ("Typographie") → 190-210px
+### Chapter openers (grammaire éditoriale)
+- Fond pleine couleur **selon le preset** (Étape 4bis) : luxe = tous
+  sombres, pop = accent full bleed, etc.
+- Eyebrow **`CHAPITRE 02`** / `03` / `04` / `05` en haut-gauche (x=80,
+  y=120), 19px Semi Bold, letter-spacing 4px, couleur accent ou contrastée
+- Accent line 120×4 posée au-dessus du mot géant
+- Grand mot en **bas-gauche** (le bloc texte se termine vers y=1040),
+  Display du preset, **mot entier sur une seule ligne — jamais coupé en
+  plein milieu d'un mot**. Si le mot ne tient pas, **réduire la taille de
+  police jusqu'à ce qu'il tienne** dans ~60% de la largeur utile (le slot
+  image occupe la droite). Échelle indicative selon le mot :
+  - 4 lettres ("Logo") → 340-400px possibles
+  - 7 lettres ("Couleur", "Système") → 240-300px
+  - 11 lettres ("Typographie") → 170-210px
+- **Slot image à droite** (`chapitre-logo`, `chapitre-couleur`,
+  `chapitre-typo`, `chapitre-systeme`) : dimensions par chapitre dans
+  l'Étape 8 — c'est lui qui donne la respiration éditoriale
+- Sous-titre du chapitre en **bas-droite** (x=1140, y=1086, w=680, align
+  right, 22px Medium) : le contenu du chapitre en 3 items séparés par
+  ` · ` (ex « Variantes · Zone de protection · Taille minimale »)
 - Couleur contrastée selon le fond (cream sur sombre, primary sur accent clair)
-- Sommaire 4 lignes en bas (01/02/03/04 + intitulés)
 - Pas de colonne descriptive
 
 > **Pourquoi ne pas casser les mots** : couper "Typo / graphy" ou "Lo / go"
@@ -1905,7 +1981,74 @@ Sur les content sections, la colonne gauche (x=80, y=160, width=347) contient :
 
 ---
 
-## Étape 4bis — Adaptation du design selon `brand.md`
+## Étape 4bis — Sélectionner le preset visuel (5 styles)
+
+**La structure des 15 slides est fixe ; le rendu ne l'est pas.** La même
+grammaire (slots images, chapter openers, collage sommaire) doit pouvoir
+produire un brand book de maison de luxe ET un brand book de marque pop.
+Le preset est la **peau** appliquée sur le squelette. Le choisir AVANT de
+coder la moindre slide, et l'écrire dans `brand.md` (section Univers
+visuel → `**Preset visuel**`) pour que le mode BOOK le retrouve.
+
+### Les 5 presets
+
+| Preset | Ambiance | Fonds (cover / content / chapters / back) | Display typique | Traitement des images & placeholders | Radius | Signature |
+|---|---|---|---|---|---|---|
+| **Luxe éditorial** | Sombre, dramatique, muséal | `primaryDark` partout, texte cream | Serif (Playfair, Cormorant) | Duotone teinté primary, sombres ; bleeds hors cadre autorisés (slots police, chapitre-typo, hierarchie) ; placeholder = dégradé vertical `noir→primaryDark` + voile accent 8% | 8-12 | Accent chirurgical (<10%), white space massif, verticalité |
+| **Minimal tech** | Clair, précis, suisse | `white` partout, chapters : 3 `white` texte primary + 1 `accent` | Sans géométrique (Inter, Helvetica) | Images cadrées strictes, jamais de bleed, hairline border 1px ; placeholder = aplat `gris froid 4%` + grille fine accent 8% | 0-4 | Grilles visibles, numérotation, densité maîtrisée |
+| **Crème organique** | Chaleureux, artisanal, matière | `cream` partout, chapters alternance `primary` / `accent` adouci | Serif doux ou sans premium (Manrope) | Images naturelles chaudes, pas de duotone ; placeholder = dégradé diagonal `cream→accent 25%` | 16-24 | Rondeur, textures, tons chauds |
+| **Pop contrasté** | Énergique, franc, direct | Alternance `white` / `accent` full bleed / `noir` ; chapters tous `accent` | Display bold XXL | Images saturées, cadres pleins 4-8px `noir` ; placeholder = 2 aplats tranchés `accent`+`primary` en diagonale dure (pas de fondu) | 16-24 ou 999 (pills) | Contrastes durs, chips visibles, tailles +20% |
+| **Corporate clair** | Institutionnel, rigoureux, premium | `white` + chapters `primary`, back `primaryDark` | Sans premium (Inter, Manrope) | Photo documentaire désaturée ou N&B ; placeholder = dégradé discret `primary→primaryDark` opacité 90% | 4-8 | Sobriété, alignements stricts, eyebrows tracking large |
+
+### Sélection automatique depuis l'interview
+
+Chaque réponse vote pour un ou plusieurs presets. Compter les voix :
+
+| Réponse | Vote |
+|---|---|
+| Q11 Sombre & dramatique | Luxe éditorial |
+| Q11 Clair & aéré | Minimal tech, Corporate clair |
+| Q11 Crème & chaleureux | Crème organique |
+| Q11 Contrasté noir/blanc | Pop contrasté |
+| Q1 Confidentiel & premium | Luxe éditorial, Corporate clair |
+| Q1 Direct & tranchant | Pop contrasté |
+| Q1 Chaleureux & humain | Crème organique |
+| Q1 Technique & expert | Minimal tech, Corporate clair |
+| Q8 Serif éditorial | Luxe éditorial, Crème organique |
+| Q8 Géométrique moderne | Minimal tech |
+| Q8 Sans-serif premium | Corporate clair, Crème organique |
+| Q8 Display dégaussé | Pop contrasté, Luxe éditorial |
+| Q12 Architecture & passages | Luxe éditorial, Corporate clair |
+| Q12 Nature & matières brutes | Crème organique |
+| Q12 Tech minimale & grilles | Minimal tech |
+| Q12 Éditorial luxe & mode | Luxe éditorial |
+| Q14 Sobre / Premium | Luxe éditorial, Corporate clair |
+| Q14 Audacieux | Pop contrasté |
+| Q14 Chaleureux | Crème organique |
+| Q14 Technique | Minimal tech |
+| Q14 Émotionnel | Luxe éditorial, Crème organique |
+
+**Décision** :
+- Un preset domine de ≥2 voix → le prendre, l'annoncer en 1 ligne dans
+  le récap (« Preset : Luxe éditorial, dérivé de tes réponses sombre +
+  serif + premium »). Pas de question.
+- Égalité ou écart de 1 voix → poser **une seule** `AskUserQuestion`
+  avec les 2-3 presets en tête + 1 ligne de description chacun, le
+  favori marqué *(Recommandé)*.
+- Mode BOOK : lire `**Preset visuel**` dans brand.md. S'il est absent,
+  inférer depuis les sections Univers visuel + Identité verbale, et
+  glisser la confirmation dans la question groupée de l'Étape 2.
+
+**Le preset pilote** : les constantes `PRESET.bg.*` (fonds par type de
+slide), `PRESET.display` (famille titres), `PRESET.imageRadius`,
+`PRESET.placeholderFill()` (recette de dégradé des slots vides),
+`PRESET.allowBleed` (autoriser les images hors cadre), `PRESET.frame`
+(bordures d'images). L'Étape 4ter affine ensuite par-dessus, réponse
+par réponse.
+
+---
+
+## Étape 4ter — Adaptation fine selon `brand.md` (par-dessus le preset)
 
 **Règle fondamentale** : le brand book n'a **pas un layout fixe**. Les choix
 visuels (fond des slides, tailles des titres, intensité de l'accent, fonts,
@@ -2052,6 +2195,9 @@ sans demande explicite) :
 | Eyebrows sections (ex `IDENTITY` uppercase) | **IDENTITÉ**, **LOGO**, **COULEUR**, **TYPOGRAPHIE**, **SYSTÈME** (uppercase ASCII conservé pour les caractères accentués) |
 | Phrase d'exemple type hierarchy (slide 12) | **« Nous ne livrons pas un produit, mais la solution complète. »** *(défaut — peut être remplacée par la formule signature du brand.md si présente)* |
 | Sommaire lignes (slide 02) | **« 01 Identité »**, **« 02 Logo »**, **« 03 Couleur »**, **« 04 Typographie »**, **« 05 Système »** |
+| Eyebrow chapter openers | **« CHAPITRE 02 »** … **« CHAPITRE 05 »** |
+| Eyebrow cover | **« IDENTITÉ DE MARQUE · [année] »** |
+| Footer gauche | **nom de la marque en capitales** (ex « MAX PICCININI ») |
 | Footer page | **« page XX/15 »** *(le mot "page" reste en français — pas "Page" majuscule)* |
 
 > **Pourquoi cette règle stricte** : Arnaud livre les brand books à des
@@ -2063,7 +2209,13 @@ sans demande explicite) :
 ### Préambule : helpers et constantes
 
 ```js
-// Couleurs depuis la table Couleurs de brand.md (à injecter)
+// Nom de la marque — collecté en A.1.c (CRÉATION) ou lu dans le titre
+// de brand.md (BOOK). JAMAIS une valeur d'exemple du SKILL.md.
+const BRAND_NAME = "[Nom réel de la marque]";
+
+// Couleurs depuis la table Couleurs de brand.md (à injecter).
+// ⚠️ Les hex ci-dessous sont des EXEMPLES (projet fokusia) — toujours
+// les remplacer par les valeurs réelles de brand.md.
 const COLORS = {
   primary:        "#06211a",
   primaryDark:    "#04231E",
@@ -2087,6 +2239,20 @@ const hex = (h) => {
   const x = h.replace("#","");
   return { r: parseInt(x.slice(0,2),16)/255, g: parseInt(x.slice(2,4),16)/255, b: parseInt(x.slice(4,6),16)/255 };
 };
+
+// État du preset (Étape 4bis) + collecte des slots vides (Étape 9ter)
+const PRESET = {
+  id: "luxe",                       // luxe | minimal | creme | pop | corporate
+  bg: { cover: "primaryDark", content: "primaryDark", immersive: "primaryDark",
+        chapters: ["primaryDark","primaryDark","primaryDark","primaryDark"],
+        back: "primaryDark" },      // ← valeurs pour Luxe éditorial ; adapter selon la table 4bis
+  display: { family: "Playfair Display", style: "SemiBold" },
+  imageRadius: 8,
+  allowBleed: true,
+  frame: null,                      // bordure des slots (hors masque). Minimal tech : {color:"border", w:1} ; Pop : {color:"<token sombre>", w:4} ; sinon null
+  placeholderFill: (slot) => PLACEHOLDER_RECIPES["luxe"](slot),
+};
+const PLACEHOLDER_SLOTS = [];
 
 await Promise.all(FONTS.map(f => figma.loadFontAsync(f)));
 ```
@@ -2259,6 +2425,166 @@ par `cream` programmatiquement — mais cette opération est fragile sur des
 SVG complexes. La recommandation est de demander à l'utilisateur la
 variante blanche dès qu'on détecte qu'elle manque.
 
+### Préambule : helper pour placer les images (`placeImage`) — structure MASQUE
+
+**Obligatoire pour tous les slots images.** Chaque slot est un **groupe
+masque** : un rectangle « masque » exactement à la taille du slot
+(`isMask = true`) + une couche de contenu au-dessus (image clonée si
+fournie, sinon dégradé du preset). Jamais d'upload, jamais de base64.
+
+> **Pourquoi un masque et pas un simple rectangle** (retour Arnaud,
+> 2026-06) : avec un rectangle plein, remplacer le placeholder oblige à
+> redécouper chaque image à la bonne taille, slot par slot. Trop de
+> travail. Avec un masque pré-posé à la taille du slot, Arnaud glisse
+> n'importe quelle image (même beaucoup plus grande) dans le groupe :
+> elle est **automatiquement rognée au cadre du masque**, sans recrop.
+> Il peut ensuite la déplacer ou la zoomer derrière le masque, le cadre
+> ne bouge pas. Structure cible (vue dans le Figma de référence,
+> node 19:2) :
+>
+> ```
+> MoodBoard · <slot>            (groupe)
+>   ├── <slot> · masque         (rect taille slot, isMask, en bas)
+>   └── <slot> · image          (image clonée OU dégradé, au-dessus, masquée)
+> ```
+
+```js
+// IMG_TPLS : peuplé à l'Étape A.1.a.bis (nodes "IMG · <slot>" de Page 1)
+// PRESET   : sélectionné à l'Étape 4bis
+
+/**
+ * Place un slot image sous forme de GROUPE MASQUE.
+ * @param {FrameNode} parent
+ * @param {object} o - { slot, x, y, w, h, radius? }
+ * @returns le GroupNode (nommé "MoodBoard · <slot>")
+ */
+function placeImage(parent, o) {
+  const rad = (o.radius !== undefined) ? o.radius : PRESET.imageRadius;
+  const tpl = IMG_TPLS[o.slot];
+
+  // 1. Le MASQUE : rect exactement à la taille du slot. Sa couleur n'est
+  //    pas rendue (un masque ne sert que d'alpha), on le met en blanc.
+  const mask = figma.createRectangle();
+  mask.resize(o.w, o.h);
+  if ("cornerRadius" in mask) mask.cornerRadius = rad;
+  mask.fills = [{ type: "SOLID", color: { r: 1, g: 1, b: 1 } }];
+  mask.x = o.x; mask.y = o.y;
+  mask.name = `${o.slot} · masque`;
+  parent.appendChild(mask);          // index bas = sous le contenu
+
+  // 2. Le CONTENU : image clonée (cadrée COVER, centrée, débordement
+  //    assumé = le masque rogne) ou dégradé placeholder.
+  let content;
+  if (tpl) {
+    content = tpl.clone();
+    const sc = Math.max(o.w / tpl.width, o.h / tpl.height);
+    if (content.rescale) content.rescale(sc); else content.resize(o.w, o.h);
+    content.x = o.x + (o.w - content.width) / 2;
+    content.y = o.y + (o.h - content.height) / 2;
+  } else {
+    content = figma.createRectangle();
+    content.resize(o.w, o.h);
+    if ("cornerRadius" in content) content.cornerRadius = rad;
+    content.fills = PRESET.placeholderFill(o.slot);  // dégradé du preset
+    content.x = o.x; content.y = o.y;
+    PLACEHOLDER_SLOTS.push(o.slot);  // collecté pour images-brief.md
+  }
+  content.name = `${o.slot} · image`;
+  parent.appendChild(content);       // index haut = au-dessus du masque
+
+  // 3. Activer le masque PUIS grouper (ordre z conservé : masque en bas)
+  mask.isMask = true;
+  const group = figma.group([mask, content], parent);
+  group.name = `MoodBoard · ${o.slot}`;
+
+  // 4. Cadre du preset (Pop : 4px encre) — posé HORS du groupe masque
+  //    pour ne jamais être rogné, et survivre au remplacement de l'image.
+  if (PRESET.frame) {
+    const fr = figma.createRectangle();
+    fr.resize(o.w, o.h);
+    if ("cornerRadius" in fr) fr.cornerRadius = rad;
+    fr.fills = [];
+    fr.strokes = solid(COLORS[PRESET.frame.color]);
+    fr.strokeWeight = PRESET.frame.w;
+    fr.strokeAlign = "INSIDE";
+    fr.x = o.x; fr.y = o.y;
+    fr.name = `${o.slot} · cadre`;
+    parent.appendChild(fr);
+  }
+  return group;
+}
+```
+
+**Remplacement par Arnaud (sans recrop)** : double-clic dans le groupe
+`MoodBoard · <slot>` → sélectionner la couche `<slot> · image` →
+« Place image » (ou glisser un fichier dessus). La nouvelle image hérite
+du cadre du masque. Pour réajuster : la déplacer / la zoomer librement,
+le masque garde le cadrage. Le texte posé « par-dessus » un slot (numéros
+univers, labels) doit rester **hors du groupe masque** (sinon il est
+rogné) : le poser après l'appel `placeImage`, en enfant direct de la slide.
+
+**Recettes `placeholderFill()` par preset** (fills GRADIENT_LINEAR non
+bindés — exception documentée, comme les shades de la slide 09 ; les
+dégradés ne peuvent pas être liés à des variables) :
+
+```js
+// Helper générique : dégradé linéaire vertical entre 2 couleurs
+const grad = (h1, h2, opacity2 = 1) => [{
+  type: "GRADIENT_LINEAR",
+  gradientTransform: [[0, 1, 0], [-1, 0, 1]],   // vertical haut → bas
+  gradientStops: [
+    { position: 0, color: { ...hex(h1), a: 1 } },
+    { position: 1, color: { ...hex(h2), a: opacity2 } },
+  ],
+}];
+
+const PLACEHOLDER_RECIPES = {
+  "luxe":      (slot) => grad(COLORS.ardoise ?? "#05080F", COLORS.primaryDark),
+  "minimal":   (slot) => [{ type: "SOLID", color: hex("#F2F4F7") }],
+  "creme":     (slot) => grad(COLORS.cream, COLORS.accent, 0.25),
+  "pop":       (slot) => [
+    // 2 aplats tranchés : un rectangle accent + diagonale primary posée par-dessus
+    { type: "SOLID", color: hex(COLORS.accent) },
+  ],
+  "corporate": (slot) => grad(COLORS.primary, COLORS.primaryDark),
+};
+```
+
+> **Pourquoi un dégradé et pas un gris hachuré** : le brand book doit être
+> **présentable au client même sans photos**. Un placeholder gris dashed
+> dit « document inachevé » ; un dégradé dans les couleurs de la marque
+> dit « zone d'ambiance », et le drag-drop d'une vraie photo par-dessus
+> prend 5 secondes. Le nom de node `MoodBoard · <slot>` suffit à
+> retrouver chaque emplacement (panneau Layers ou recherche Figma).
+
+### Registre des slots images (16 slots nommés)
+
+C'est la **table de référence** : `images-brief.md` (Étape 9ter) est
+généré depuis ce registre, et l'utilisateur nomme ses nodes Figma
+`IMG · <slot>` avec ces identifiants exacts.
+
+| Slot | Slide | Position (x,y) | Taille | Rôle éditorial |
+|---|---|---|---|---|
+| `cover` | 01 | 1513, 0 | 407×1280 | Portrait ou visuel signature, bande verticale pleine hauteur bord droit |
+| `sommaire-1`…`sommaire-4` | 02 | collage central dès 569, 167 | ~156×440-465 chacune | 4 bandes verticales masonry (hauteurs décalées) |
+| `sommaire-5` | 02 | 1692, 47 | 155×151 | Petite vignette haut-droite |
+| `identite` | 03 | 1408, 255 | 513×669 | Visuel d'ambiance qui incarne le ton |
+| `univers-1`…`univers-6` | 04 | grille 3×2 dès 720, 440 | 346×232 chacune | Moodboard labellisé (thèmes selon Q12) |
+| `chapitre-logo` | 05 | 1224, 188 | 696×677 | Visuel chapitre Logo |
+| `logo-hero` | 06 | 560, 0 | 1260×844 | Grand visuel de mise en scène du logo |
+| `chapitre-couleur` | 07 | 1273, 120 | 347×1020 | Bande verticale chapitre Couleur |
+| `palette-col-<nom>` | 08 | dans chaque colonne, y=345 | 186×546 | Insert duotone par couleur (optionnel) |
+| `nuances` | 09 | 100, 382 | 320×272 | Visuel matière sous le paragraphe |
+| `chapitre-typo` | 10 | 741, -102 | 485×642 | Visuel chapitre Typographie (bleed haut si preset l'autorise) |
+| `police` | 11 | -534, 404 | 968×705 | Visuel bas-gauche (bleed gauche si preset l'autorise) |
+| `hierarchie` | 12 | 1239, 0 | 681×1280 | Panneau pleine hauteur bord droit |
+| `chapitre-systeme` | 13 | 1353, 171 | 615×695 | Visuel chapitre Système |
+| `elements` | 14 | 129, 728 | 1668×255 | Bandeau panoramique sous les 6 cards |
+
+**Presets sans bleed** (Minimal tech, Corporate clair) : ramener les
+slots débordants dans le cadre — `chapitre-typo` → (1140, 120, 600×700),
+`police` → (80, 560, 480×560), `hierarchie` → (1320, 80, 520×1068).
+
 ### Layout de la grille de slides
 
 Disposer les 15 slides en grille 2 colonnes × 8 rangées (dernière rangée
@@ -2319,11 +2645,14 @@ function makeSlide({ index, total, bg, isChapterOpener = false }) {
   return slide;
 }
 
-function addFooter(slide, { handle, page, total, color = COLORS.dark }) {
+function addFooter(slide, { brandName, page, total, color = COLORS.dark }) {
+  // brandName : nom de la marque EN CAPITALES (ex "MAX PICCININI").
+  // Le handle @marque n'est utilisé que sur demande explicite.
   const h = figma.createText();
   h.fontName = {family:"Inter Display", style:"Regular"};
   h.fontSize = 16;
-  h.characters = handle;
+  h.letterSpacing = { value: 2, unit: "PIXELS" };
+  h.characters = brandName.toUpperCase();
   h.resize(400, 24);
   h.textAutoResize = "HEIGHT";
   h.fills = solid(color);
@@ -2360,6 +2689,12 @@ Découper en **7 appels** :
 | 6 | Typeface (11) + Type Hierarchy (12) | |
 | 7 | Chapter System (13) + Key Elements (14) + Back Cover (15) + `figma.fileThumbnailNodeId` = id de la slide 01 + `viewport.scrollAndZoomIntoView` | Finalisation |
 
+Les slots images ne changent pas la découpe : un placeholder dégradé est
+un simple rectangle, et un clone de node `IMG` est une opération locale
+légère. Redéclarer les helpers (`placeImage`, recettes, `PRESET`) au
+début de **chaque** appel — les scopes ne persistent pas entre appels
+`use_figma` (re-scanner `IMG_TPLS` via A.1.a.bis à chaque fois).
+
 À chaque appel, **récupérer la page courante** au lieu de la recréer :
 ```js
 const page = figma.currentPage.name === "✦ Brand Book"
@@ -2373,28 +2708,48 @@ figma.currentPage = page;
 ## Étape 8 — Spécifications par slide
 
 ### 01 · Couverture
-- Fond : `primary` (foncé, ex #06211a)
-- **Logo source réel en haut-gauche** : appeler le helper
-  `placeLogo(slide01, { x: 128, y: 80, w: 240, h: 96, variant: "white" })`
-  défini au préambule de l'Étape 6. Hauteur 96px, largeur proportionnelle
-  au ratio du logo (ne pas écraser).
-  **Variante** : sur ce fond sombre, le helper utilise `LOGOS.white` si
-  fourni dans le Figma cible, sinon fallback automatique sur `LOGOS.color`
-  avec une mention au récap final.
-  **Ne jamais** remplacer par un texte "Logo" 96px — c'est un placeholder
-  inacceptable qui rend le brand book inutilisable.
-- Tagline orange (`accent`) en milieu 30px Inter Display Medium, x=128 y=656
-- Titre marque XXL : 2 mots sur 2 lignes, **200px Inter Display Regular**,
-  couleur `white`/`accent`, x=128 y=736
+- Fond : `PRESET.bg.cover` (luxe : `primaryDark` ; crème : `cream` ; etc.)
+- **Slot image `cover`** : `placeImage(s1, { slot: "cover", x: 1513, y: 0,
+  w: 407, h: 1280, radius: 0 })` — bande verticale pleine hauteur collée
+  au bord droit (portrait du fondateur, matière, visuel signature). La
+  poser **en premier** pour qu'elle reste sous les textes.
+- **Logo source réel en haut-gauche** : `placeLogo(slide01, { x: 100,
+  y: 80, w: 240, h: 72, variant: selon fond })`. **Ne jamais** remplacer
+  par un texte "Logo" — placeholder inacceptable.
+- Eyebrow **`IDENTITÉ DE MARQUE · [année courante]`** 14px Semi Bold,
+  letter-spacing 4px, x=100 y=200, couleur accent ou contrastée
+- Titre marque XXL en **bas-gauche** : 1-2 mots sur 1-2 lignes,
+  **140-200px** (selon Q9) Display du preset, x=150, le bloc se termine
+  vers y=890. Largeur max ~1300px (laisser respirer le slot cover).
+- Accent line 120×4 (`accent`) x=160 y=930
+- **Formule signature** entre guillemets français « … » en 32px Italic ou
+  Regular, x=160 y=984, w=1300
+- Footer : nom de marque + page 01/15
 
 ### 02 · Sommaire
-- Fond : `neutralLight`
-- Header gauche : **"Sommaire"** 40px display (et non plus "Index")
-- Liste : **5 lignes** — **"01 Identité"**, **"02 Logo"**, **"03 Couleur"**,
-  **"04 Typographie"**, **"05 Système"** en 64px display + numéro accent à gauche
-- Chaque ligne avec une mini-description à droite (16-20px Regular) — la
-  description est rédigée en français (ex : « Ton, formule, univers »,
-  « Variantes et zone de protection », « Palette et nuances », etc.)
+- Fond : `PRESET.bg.content`
+- Eyebrow **"SOMMAIRE"** 18px Semi Bold letter-spacing 4px (x=100, y=120)
+- **5 lignes de chapitres**, une par chapitre, pitch vertical 168px à
+  partir de y=300 :
+  - Numéro **"01"…"05"** 64px Display, x=100, couleur accent
+  - Intitulé (**"Identité"**, **"Logo"**, **"Couleur"**,
+    **"Typographie"**, **"Système"**) 64px Display, x=260
+  - Description à droite : x=1300, w=520, 18px Regular — rédigée en
+    français (« Ton, formule, univers », « Variantes et zone de
+    protection », « Palette et nuances », « [Display] et [Body] »,
+    « Règles de composition »)
+  - Hairline 520×1 sous la description (x=1300, y=ligne+70), opacité 30%
+- **Collage central — 5 slots images masonry** entre les intitulés et
+  les descriptions (la zone x=560…1200 est libre) :
+  - `placeImage(s2, { slot: "sommaire-1", x: 569, y: 331, w: 156, h: 438 })`
+  - `placeImage(s2, { slot: "sommaire-2", x: 726, y: 167, w: 155, h: 457 })`
+  - `placeImage(s2, { slot: "sommaire-3", x: 882, y: 315, w: 155, h: 444 })`
+  - `placeImage(s2, { slot: "sommaire-4", x: 1036, y: 167, w: 158, h: 465 })`
+  - `placeImage(s2, { slot: "sommaire-5", x: 1692, y: 47, w: 155, h: 151 })`
+  Les hauteurs décalées créent le rythme masonry : ne pas les aligner.
+  Preset Minimal tech : remplacer le collage par 1 seule image cadrée
+  (x=620, y=200, 560×400) — la densité d'images est un code éditorial,
+  pas minimal.
 
 ### 03 · Identité verbale *(depuis l'interview Phase A.2)*
 - Fond : `neutralLight`
@@ -2408,6 +2763,10 @@ figma.currentPage = page;
   - **Mots à utiliser** : eyebrow accent (libellé **« MOTS À UTILISER »**) + **liste 6-8 mots max** en 18px Medium primary (3 par ligne)
   - **Mots à éviter** : eyebrow accent (libellé **« MOTS À ÉVITER »**) + **liste 5-6 mots max** en 18px Regular ardoise barrés (`textDecoration: STRIKETHROUGH`)
 - **3 CTAs exemples** alignés horizontalement en 16-18px Semi Bold primary avec icône `→` (jamais accent — l'accent est réservé aux vrais CTAs en production)
+- **Slot image `identite`** : `placeImage(s3, { slot: "identite",
+  x: 1408, y: 255, w: 513, h: 669 })` — visuel d'ambiance qui incarne le
+  ton, bord droit. Limiter la formule signature et le bandeau attributs
+  à w=1280 pour ne pas passer sous l'image.
 
 > **Sobriété** : pas plus de 8 mots par colonne, pas de chips colorés, pas
 > d'éléments décoratifs additionnels. La densité dilue le premium.
@@ -2434,108 +2793,137 @@ col droite 1120px (grille 6 photos moodboard).
   - Ex pour fokusia : *« Aucune représentation littérale du métier
     d'investigation — on suggère par les codes du pouvoir installé. »*
 
-**Colonne droite — Moodboard 6 rectangles 3×2** (NOUVEAU 2026-05) :
+**Colonne droite — Moodboard 6 slots images labellisés 3×2** :
 
-> **Pourquoi 6 rectangles plutôt qu'un paragraphe** : le moodboard
-> textuel décrit en mots ce que les photos devraient montrer. C'est
-> utile pour briefer une banque image, pas pour valider visuellement
-> l'ambiance avec le client. Avec 6 placeholders prêts pour drag-drop,
-> l'utilisateur transforme la slide en **vrai moodboard photo** en
-> 30 secondes : il drag-drop ses 6 photos depuis son ordinateur sur les
-> rectangles, Figma applique automatiquement l'image comme fill.
+> **Pourquoi 6 images plutôt qu'un paragraphe** : le moodboard textuel
+> décrit en mots ce que les photos devraient montrer. Avec 6 slots
+> `placeImage()` labellisés, la slide est un **vrai moodboard photo**
+> dès que les images existent, et un moodboard d'ambiance (dégradés du
+> preset) en attendant. Drag-drop d'une photo sur un slot = 5 secondes.
 
-- Eyebrow **`MOODBOARD · 6 photos à déposer`** 11px Semi Bold accent
-  letter-spacing 30 (x=720, y=80)
-- **Grille 3 colonnes × 2 lignes**, gap 16px :
-  - Zone : x=720 à x=1840 (largeur 1120)
-  - Rectangle width : `(1120 - 2 × 16) / 3 = 362.67` → arrondi à `362`
-  - Rectangle height : `240` (ratio ~3:2 paysage)
-  - Position : `x = 720 + col × (362 + 16)`, `y = 140 + row × (240 + 16)`
-- **Style des rectangles** (placeholder) :
-  - `cornerRadius: 4`
-  - Fill cream à 8% opacity (signal visuel "vide à remplir" sur fond sombre)
-  - Stroke `accent` 1px **dashed** `[6, 6]` (signal "à compléter")
-- **Contenu de chaque rectangle** (centré) :
-  - Label thématique 14px Medium cream — ex : `1 · Architecture`,
-    `2 · Matériaux`, `3 · Lumière`, `4 · Détail / objet`,
-    `5 · Portrait situation`, `6 · Texture / ambiance`
-  - Sous-label 11px Regular accent : **« Glisser une image ici »**
-- **Adaptation des labels à brand.md Q12** (Référence d'univers) :
-  - Architecture & passages → Architecture · Matériaux · Lumière · Détail · Portrait · Texture
+- **Grille 3 colonnes × 2 lignes**, slots 346×232, gap 20px, zone à
+  partir de (720, 440) :
+  - `placeImage(s4, { slot: "univers-1", x: 720,  y: 440, w: 346, h: 232 })`
+  - `placeImage(s4, { slot: "univers-2", x: 1086, y: 440, w: 346, h: 232 })`
+  - `placeImage(s4, { slot: "univers-3", x: 1452, y: 440, w: 346, h: 232 })`
+  - `placeImage(s4, { slot: "univers-4", x: 720,  y: 692, w: 346, h: 232 })`
+  - `placeImage(s4, { slot: "univers-5", x: 1086, y: 692, w: 346, h: 232 })`
+  - `placeImage(s4, { slot: "univers-6", x: 1452, y: 692, w: 346, h: 232 })`
+- **Par-dessus chaque slot** (textes posés après l'image, jamais en
+  enfants du rectangle) :
+  - Numéro `01`…`06` 12px Semi Bold, x=slot.x+20, y=slot.y+18,
+    couleur cream (ou contrastée selon preset)
+  - Label thématique 14px Medium, x=slot.x+20, y=slot.y+188 — un mot
+    concret par slot, dérivé de Q12 (table ci-dessous)
+  - Si l'image clonée est trop claire pour les labels, poser un voile
+    `noir` opacité 25% entre l'image et les textes (rectangle même taille)
+- **Labels thématiques selon brand.md Q12** (Référence d'univers) :
+  - Architecture & passages → Escaliers · Cathédrale · Sculpteur · Bibliothèque · Musée · Lumière
   - Nature & matières brutes → Paysage · Texture · Matière · Geste · Détail organique · Ambiance
-  - Tech minimale & grilles → Grille · Texture data · Détail interface · Lumière froide · Geste tech · Composition
+  - Tech minimale & grilles → Grille · Data · Interface · Lumière froide · Geste tech · Composition
   - Éditorial luxe & mode → Détail produit · Texture luxe · Portrait · Composition · Geste · Atmosphère
 
-**Légende sous la grille** (y=696, w=1120) :
-- 13px Regular cream lh=160 : *« Glisser-déposer 6 photos depuis votre
-  ordinateur sur chaque rectangle. Figma applique automatiquement
-  l'image comme fill. Brief suggéré : [reprendre les 3-4 attributs
-  Univers de brand.md en 1 phrase]. »*
+**Workflow utilisateur — drag-drop dans Figma** (rappelé dans
+`images-brief.md`, pas sur la slide) :
+1. Sélectionner une photo dans le Finder / Explorer
+2. La glisser-déposer sur le node `MoodBoard · univers-X`
+3. Figma applique l'image comme fill (`scaleMode: FILL`), dimensions
+   conservées ; cadrage ajustable via double-clic → Crop
 
-**Workflow utilisateur — drag-drop dans Figma** :
-1. Ouvrir la slide 04 dans Figma
-2. Sélectionner une photo dans le Finder / Explorer
-3. Glisser-déposer sur le rectangle cible
-4. Figma applique automatiquement l'image comme fill, le rectangle
-   garde ses dimensions, l'image est en `scaleMode: FILL` par défaut
-5. Pour ajuster le cadrage : double-clic sur le rectangle → onglet
-   "Crop" dans le panneau de droite
-
-### 05/07/10/13 · Chapter openers- Fond pleine couleur alterné : 05=`accent`, 07=`primaryAlt`, 10=`accent`,
-  13=`primary`
-- Numéro de chapitre en haut-gauche : **"02" / "03" / "04" / "05"** en 96px blanc
-  (01 est désormais réservé à Identité sur les slides 03-04)
-- Titre **mot français entier sur une seule ligne — jamais coupé** :
-  **"Logo"**, **"Couleur"**, **"Typographie"**, **"Système"** — Inter Display
-  Bold, blanc. Taille adaptée pour tenir dans la largeur utile (1760px)
-  sans débordement :
-  - "Logo" (4 lettres) → 360-400px
-  - "Couleur", "Système" (7 lettres) → 260-300px
-  - "Typographie" (11 lettres) → 190-210px
-  Si le `clipsContent: true` détecte un débordement lors du test, **réduire
-  la taille de 20px** et réessayer plutôt que de casser le mot.
-- Liste des sections du chapitre en bas à droite (24px Medium) — rédigée
-  en français
+### 05/07/10/13 · Chapter openers
+- Fond pleine couleur : **par défaut selon le preset** (luxe : tous
+  `primaryDark` ; pop : tous `accent` ; sinon alternance pilotée par Q10,
+  cf. Étape 4ter)
+- Eyebrow **`CHAPITRE 02`** / **`CHAPITRE 03`** / **`CHAPITRE 04`** /
+  **`CHAPITRE 05`** en haut-gauche (x=80, y=120), 19px Semi Bold,
+  letter-spacing 4px, couleur accent (01 est réservé à Identité,
+  slides 03-04)
+- **Slot image à droite** (poser avant les textes) :
+  - 05 : `placeImage(s5, { slot: "chapitre-logo", x: 1224, y: 188, w: 696, h: 677 })`
+  - 07 : `placeImage(s7, { slot: "chapitre-couleur", x: 1273, y: 120, w: 347, h: 1020 })`
+  - 10 : `placeImage(s10, { slot: "chapitre-typo", x: 741, y: -102, w: 485, h: 642 })`
+    (bleed haut — si `PRESET.allowBleed` est faux : x=1140, y=120, 600×700)
+  - 13 : `placeImage(s13, { slot: "chapitre-systeme", x: 1353, y: 171, w: 615, h: 695 })`
+- Accent line 120×4-5 au-dessus du mot (ex x=164, y=400-640 selon hauteur du mot)
+- Titre **mot français entier sur une seule ligne — jamais coupé**,
+  posé en **bas-gauche** (le bloc se termine vers y=1040) :
+  **"Logo"**, **"Couleur"**, **"Typographie"**, **"Système"** — Display
+  du preset, couleur contrastée. Taille adaptée pour tenir à gauche du
+  slot image sans débordement :
+  - "Logo" (4 lettres) → 340-400px
+  - "Couleur", "Système" (7 lettres) → 240-300px
+  - "Typographie" (11 lettres) → 170-210px
+  Si débordement au test, **réduire la taille de 20px** et réessayer
+  plutôt que de casser le mot.
+- Sous-titre du chapitre en **bas-droite** (x=1140, y=1086, w=680, align
+  right, 22px Medium) : 3 items séparés par ` · ` —
+  05 : « Variantes · Zone de protection · Taille minimale » ;
+  07 : « Palette · Nuances · Usage de l'accent » ;
+  10 : « [Display] · [Body] · Hiérarchie » ;
+  13 : « Composition · Règles · [mot signature du preset] »
 
 ### 06 · Content — Logo
-- Fond : `neutralLight`
-- Colonne gauche (x=80) : titre "Logo" 40px + paragraphe descriptif depuis `brand.md`
-- Zone droite : **3 cartouches 480×320 cornerRadius 24** avec variantes du
-  **logo source réel** (jamais un placeholder texte) :
+- Fond : `PRESET.bg.content`
+- **Slot image `logo-hero`** (poser en premier) : `placeImage(s6,
+  { slot: "logo-hero", x: 560, y: 0, w: 1260, h: 844, radius: 0 })` —
+  grand visuel de mise en scène (logo en situation, matière, signalétique).
+  Si le slot est en placeholder, y poser le logo par-dessus, centré :
+  `placeLogo(s6, { x: 960, y: 280, w: 460, h: 280, variant: "white" })`
+- Colonne gauche (x=100, w=380) : titre "Logo" 40px + paragraphe
+  descriptif depuis `brand.md` (type, symbolique, règle vecteur :
+  « Toujours inséré comme vrai vecteur, jamais recréé. Variante couleur
+  sur fonds clairs, variante blanche sur fonds sombres. »)
+- En bas : **3 cartouches 400×214 cornerRadius selon preset**, à
+  y=846, x=560 / 990 / 1420, avec variantes du **logo source réel**
+  (jamais un placeholder texte) :
   - Cartouche 1 : fond `white` + logo en **couleur originale** (`LOGOS.color`)
-  - Cartouche 2 : fond `accent` + logo en **blanc/cream** (`LOGOS.white`)
-  - Cartouche 3 : fond `primary` + logo en **blanc/cream** (`LOGOS.white`)
+  - Cartouche 2 : fond `primaryDark` + logo en **blanc/cream** (`LOGOS.white`)
+  - Cartouche 3 : fond `accent` + logo en **blanc/cream** (`LOGOS.white`)
 
   **Implémentation** : pour chaque cartouche, créer le rectangle de fond
-  via `figma.createRectangle()` (avec la couleur de fond bindée à la
-  variable correspondante), puis appeler le helper
-  `placeLogo(cartouche, { x: 64, y: 64, w: 352, h: 192, variant: "color"|"white" })`
-  défini au préambule de l'Étape 6. Le helper clone les nodes Figma de
-  `LOGOS` (détectés sur Page 1 à l'Étape A.1.a). Si `LOGOS.white`
-  est `null`, fallback automatique sur `LOGOS.color` avec mention au récap
-  final. **Centrer le logo** dans chaque cartouche (padding interne ≥ 64px).
+  via `figma.createRectangle()` (couleur bindée à la variable), puis
+  `placeLogo(cartouche, { x: 92, y: 74, w: 216, h: 66, variant: "color"|"white" })`.
+  Si `LOGOS.white` est `null`, fallback automatique sur `LOGOS.color`
+  avec mention au récap final. **Centrer le logo** dans chaque cartouche.
 
-- En bas : **"Taille minimale du logo"** + spec "128px / 35px" + ligne séparatrice
+- Sous les cartouches (y=1148) : 2 blocs de spec côte à côte —
+  eyebrow **"TAILLE MINIMALE"** + valeur « 96 px de large » (x=620) ;
+  eyebrow **"ZONE DE PROTECTION"** + valeur « 1× la hauteur du logo »
+  (x=1050)
 
 ### 08 · Palette de couleurs
-- Fond : `neutralLight`
-- Colonne gauche : titre **"Palette de couleurs"** 40px + paragraphe règle
-  d'usage rédigé en français
-- Zone droite (x=520, y=160) : 4 à 6 **colonnes 251×960px cornerRadius 24**
-  côte à côte avec gap 16px. Chaque colonne :
-  - Fond = la couleur du token (ex `accent`, `primaryAlt`, `primary`, `white`)
-  - Nom de la couleur en haut (24px Medium) — **en français** (ex « Primaire »,
-    « Accent », « Crème », « Bordeaux »). Le nom de la variable Figma interne
-    (`primary`, `accent`, etc.) reste technique mais ce qui s'affiche est le
-    libellé français correspondant.
-  - Bloc CMYK / HEX / RGB labels (x=24, y=80) — les libellés "CMJN" / "HEX" /
-    "RVB" en français (et non "CMYK" / "RGB")
-  - Bloc valeurs CMYK / HEX / RGB values (x=81, y=80)
+- Fond : `PRESET.bg.content`
+- Colonne gauche (x=100, w=430) : titre **"Palette de couleurs"** 40px +
+  paragraphe règle d'usage rédigé en français (rôle de chaque couleur,
+  ratio d'accent Q10)
+- Sous le paragraphe : **mini-swatches de rappel** — 1 carré 86×83 par
+  couleur, empilés verticalement à x=160 à partir de y=479 (gap 14px),
+  cornerRadius selon preset. Rappel discret de la palette dans la marge.
+- Zone droite (y=160) : 4 à 6 **colonnes 186×960px cornerRadius selon
+  preset** côte à côte avec gap 16px à partir de x=620 (6 couleurs :
+  x=620, 822, 1024, 1226, 1428, 1630). Chaque colonne :
+  - Fond = la couleur du token (ex `primary`, `noir`, `accent`, `acier`,
+    `lumière`, `bone`)
+  - Nom de la couleur en haut (y=240, 24px Medium) — **en français**
+    (ex « Primaire », « Noir », « Accent »). La variable Figma interne
+    reste technique, ce qui s'affiche est le libellé français.
+  - **Slot image intégré** (optionnel mais recommandé) :
+    `placeImage(col, { slot: "palette-col-<nom>", x: 0, y: 345, w: 186,
+    h: 546, radius: 0 })` — un visuel duotone dans la teinte de la
+    colonne. En placeholder : dégradé de la couleur de la colonne vers
+    sa version sombre (vivant même sans photo).
+  - HEX en bas (y=1018, 18px) + RVB en dessous (y=1044, 13px,
+    format « 10 · 26 · 48 »)
   - Texte blanc sur fond sombre, sombre sur fond clair
+- 4 couleurs → colonnes 280px à partir de x=620 ; 5 couleurs → 224px.
+  Les slots images suivent la largeur de leur colonne.
 
 ### 09 · Nuances
-- Fond : `cream` (variable bindée — slide content classique)
+- Fond : `PRESET.bg.content` (variable bindée — slide content classique)
 - Colonne gauche : titre **"Nuances"** + paragraphe sur l'usage des tints
+- **Slot image `nuances`** sous le paragraphe : `placeImage(s9,
+  { slot: "nuances", x: 100, y: 382, w: 320, h: 272 })` — détail de
+  matière ou texture qui montre la couleur en situation
 - Zone droite : **2 lignes de 5 carrés** (100 / 80 / 60 / 40 / 20 %) pour
   `primary` (ligne 1, à y=310) et `accent` (ligne 2, à y=690) — chaque carré
   **220×300 cornerRadius 8** (cornerRadius 8 = signature Sobre + Premium ;
@@ -2626,7 +3014,7 @@ function makeShadeRow(parent, { yRow, srcHex }) {
   });
 }
 
-// Pour fokusia : srcHex = "#0A2B32" et "#E73737"
+// srcHex = les valeurs primary / accent réelles de brand.md
 makeShadeRow(slide, { yRow: 310, srcHex: COLORS.primary });
 makeShadeRow(slide, { yRow: 690, srcHex: COLORS.accent });
 ```
@@ -2658,34 +3046,58 @@ makeShadeRow(slide, { yRow: 690, srcHex: COLORS.accent });
 > opacity sur fill = bug Figma sur fills bindés.
 
 ### 11 · Police
-- Fond : `primary` (foncé)
-- Colonne gauche : titre **"Police"** 40px blanc + paragraphe sur la police
-  rédigé en français (ex « Une typographie géométrique moderne, à la fois
-  technique et chaleureuse, qui structure l'identité sans la dater. »)
-- Zone droite : **"Aa" géant ~480px** en Inter Display Bold blanc, centré
-- En bas : nom de la police (ex "Inter Display") + alphabet complet
-  (a-z A-Z 0-9) en 28px Medium
+- Fond : `PRESET.bg.immersive` (`primary`/`primaryDark` — atmosphère)
+- Colonne gauche (x=100, w=380) : titre **"Police"** 40px + paragraphe
+  rédigé en français qui présente **les deux familles** (ex « Deux
+  familles. [Display] porte la voix, serif éditorial des titres.
+  [Body] porte l'information, sans suisse du corps. »)
+- **Slot image `police`** : `placeImage(s11, { slot: "police",
+  x: -534, y: 404, w: 968, h: 705 })` — bleed hors cadre gauche (rogné
+  par `clipsContent`), occupe le bas-gauche sous le paragraphe. Si
+  `PRESET.allowBleed` est faux : x=80, y=560, 480×560.
+- Zone droite : **2 "Aa" côte à côte** — Display 350px à (620, 160),
+  Body 320px à (1240, 226), couleur contrastée
+- Sous chaque "Aa" (y=560) : nom de la famille 24px Medium + rôle 16px
+  Regular (« Titres éditoriaux » / « Corps, rigueur suisse »)
+- En bas : alphabet complet sur 2 lignes (x=620, w=1200) —
+  majuscules A-Z en Display 36px (y=700), minuscules + chiffres en Body
+  28px (y=780)
 
 ### 12 · Hiérarchie typographique
-- Fond : `neutralLight`
-- Colonne gauche : titre **"Hiérarchie typographique"** + paragraphe court
-  rédigé en français
-- Zone droite : 5 lignes empilées (H1 56pt, H2 40pt, H3 36pt, H4 28pt,
-  Sous-titre 24pt) — chaque ligne contient :
-  - Spec gauche en français : **"Titre 1 — Inter Display Regular, 56pt/64pt,
-    interlettrage +4"** (16px Medium). Les noms "Titre 1/2/3/4" et "Sous-titre"
-    remplacent "Headline 1/2/3/4" et "Subheadline".
-  - Phrase d'exemple à la taille H1/H2/H3/H4 réelle, couleur `dark`. **Par
-    défaut** : **« Nous ne livrons pas un produit, mais la solution complète. »**
-    Si le brand.md contient une formule signature, l'utiliser à la place
-    (mais toujours en français).
+- Fond : `PRESET.bg.content`
+- **Slot image `hierarchie`** (poser en premier) : `placeImage(s12,
+  { slot: "hierarchie", x: 1239, y: 0, w: 681, h: 1280, radius: 0 })` —
+  panneau pleine hauteur collé au bord droit. Si `PRESET.allowBleed`
+  est faux : x=1320, y=80, 520×1068, radius preset.
+- Colonne gauche (x=100, w=400) : titre **"Hiérarchie typographique"** +
+  paragraphe court rédigé en français (le contraste voix / information)
+- Zone centrale (x=620, w=560) : 5 niveaux empilés — chaque niveau :
+  - Eyebrow de spec 15px Semi Bold, letter-spacing 2px, en français :
+    **"TITRE 1 · [DISPLAY] SEMIBOLD · 64 PX"**, **"TITRE 2 · …"**,
+    **"TITRE 3 · [BODY] SEMI BOLD · 26 PX"**, **"CORPS · [BODY] REGULAR
+    · 18 PX"**, **"LÉGENDE · [BODY] MEDIUM · 13 PX"**
+  - Phrase d'exemple à la taille réelle juste en dessous. **Par défaut** :
+    courtes déclinaisons de la formule signature ou du positionnement
+    (1 phrase différente par niveau, jamais du lorem). Si le brand.md
+    contient une formule signature, l'utiliser sur le niveau Légende.
+  - Positions indicatives : y=180, 340, 500, 620, 740 (resserrer si
+    l'échelle Q9 est Dramatique)
 
 ### 14 · Éléments clés
-- Fond : `neutralLight`
-- Colonne gauche : titre **"Éléments clés"** + paragraphe rédigé en français
-- Zone droite : **6 cards 280×240 cornerRadius 16** en grille 3×2 avec
-  shadow douce (`#a8d8f5` ou neutre clair, blur 20, offset 0/8)
-- Chaque card : nom de la règle en 20px Bold **en français** (ex « Espacement »,
+- Fond : `PRESET.bg.content`
+- Colonne gauche (x=100, w=400) : titre **"Éléments clés"** + paragraphe
+  rédigé en français (« Six règles de composition qui rendent l'identité
+  reproductible, du brand book à la page. »)
+- Zone droite : **6 cards 384×224** en grille 3×2 à partir de (597, 236),
+  gap 24px horizontal / 19px vertical, cornerRadius et shadow selon
+  preset (luxe : fond légèrement éclairci du bg, sans shadow ; chaleureux :
+  shadow douce). Chaque card contient une accent line 40×5 (y=+32), le
+  nom de la règle 28px Display (y=+56), la description 16px Regular
+  (y=+108, w=328).
+- **Slot image `elements`** : `placeImage(s14, { slot: "elements",
+  x: 129, y: 728, w: 1668, h: 255 })` — bandeau panoramique sous les
+  cards (matière, détail, composition large)
+- Chaque card : nom de la règle en 20-28px **en français** (ex « Espacement »,
   « Mise en page », « Contraste », « Accentuation », « Typographie »,
   « Atmosphère »…) issu de la liste **Composition rules** de `brand.md`.
   Si le brand.md contient les noms en anglais, les traduire automatiquement
@@ -2702,13 +3114,17 @@ makeShadeRow(slide, { yRow: 690, srcHex: COLORS.accent });
 | Atmosphere | Atmosphère |
 
 ### 15 · Back cover
-- Fond : `primary`
-- **Logo source réel** centré en haut (variante blanche/cream sur fond sombre)
-  via `placeLogo(slide15, { x: 800, y: 320, w: 320, h: 120, variant: "white" })`.
-  Pas de placeholder texte "Logo".
-- Centré : **"Merci"** 120px Inter Display Bold accent (y=560) — et non plus
+- Fond : `PRESET.bg.back` (sombre dans tous les presets — clôture)
+- **Logo source réel** centré en haut (variante blanche/cream sur fond
+  sombre) via `placeLogo(slide15, { x: 810, y: 200, w: 300, h: 180,
+  variant: "white" })`. Pas de placeholder texte "Logo".
+- Accent line 100×4 centrée (x=910, y=470)
+- Centré : **"Merci"** 160px Display du preset (y=520) — et non plus
   "Thank you"
-- En bas : handle + version + **"Généré par le skill brand-book"**
+- Sous le titre : **formule signature** entre guillemets « … » 32px,
+  centrée (y=760)
+- En bas centré (y=1120, 14px, letter-spacing 2px) : **"[NOM MARQUE] ·
+  IDENTITÉ DE MARQUE [année] · Généré par le skill brand-book"**
 
 ---
 
@@ -2731,7 +3147,7 @@ t.fills = solid(COLORS.accent);
 ```
 
 **③ Footer obligatoire sur les 15 slides**
-Inclure `addFooter(slide, {handle, page: i, total: 15})` à la fin de
+Inclure `addFooter(slide, {brandName, page: i, total: 15})` à la fin de
 chaque création de slide. Aucune exception (la back cover aussi).
 
 **④ Cornerradius — toujours 24 sur les blocs de couleur**
@@ -2881,12 +3297,14 @@ slides éparpillées. Si on doit marquer un état, utiliser un rectangle marker
 
 **⑫ Cleanup post-génération — purger ce qui n'est pas une slide**
 Le test a révélé que des frames orphelins peuvent être créés (compteur > 14
-en fin de génération). Toujours faire un cleanup final :
+en fin de génération). Toujours faire un cleanup final qui **préserve les
+15 slides ET la frame des prompts images** (Étape 9quater) :
 ```js
-page.children.filter(c => !/^\d{2} ·/.test(c.name)).forEach(c => c.remove());
+page.children.filter(c => !/^\d{2} ·/.test(c.name) && c.name !== "✦ Prompts images").forEach(c => c.remove());
 ```
 Cela garantit 15 slides exactement, nommées en français (cf. `SLIDE_NAMES_FR`) :
-`01 · Couverture` → `15 · Quatrième de couverture`.
+`01 · Couverture` → `15 · Quatrième de couverture`, plus la frame
+`✦ Prompts images` posée à côté de la grille.
 
 > **Migration** : si on relance la skill sur un fichier qui a déjà des slides
 > aux anciens noms anglais (`01 · Cover`, `15 · Back Cover`), le regex
@@ -2971,6 +3389,66 @@ txt(s, {text: "Une méthode verticale. Pas un studio généraliste."});
 - Slide 12 Hiérarchie, spec lignes : « H1 — Inter Bold · 40pt » devient
   « H1 · Inter Bold · 40pt » ou « H1 (Inter Bold, 40pt) ».
 
+**⑯ Slots images — discipline `placeImage()`**
+
+Tous les emplacements visuels passent par `placeImage()` (Étape 5).
+Règles non négociables :
+
+- **Toujours un groupe masque**, jamais un rectangle plein seul. La
+  structure est `MoodBoard · <slot>` (groupe) → `<slot> · masque`
+  (`isMask`, taille du slot) + `<slot> · image` (contenu, au-dessus).
+  C'est ce qui permet à Arnaud de remplacer l'image **sans recrop**
+  (cf. Étape 5). Un slot rendu en simple rectangle est un bug à corriger.
+- **Jamais de déformation** : l'image clonée est cadrée COVER (scale
+  uniforme), centrée sur le slot, le masque rogne le débordement.
+  Jamais d'étirement non uniforme.
+- **Nommage** : le groupe s'appelle `MoodBoard · <slot>` — c'est le
+  contrat de remplacement avec l'utilisateur ET la clé de la QA 9bis.
+  Ne pas renommer le groupe, ne pas le dégrouper.
+- **Ordre z** : les slots se posent AVANT les textes qui les chevauchent
+  (cover, logo-hero, hierarchie, univers-X). Les textes restent **hors
+  du groupe masque** (enfants directs de la slide), sinon ils sont rognés.
+- **Cadre** : le cadre du preset (Pop : 4px encre) est un rectangle
+  séparé posé HORS du groupe masque (`PRESET.frame`), pour ne pas être
+  rogné et survivre au remplacement de l'image. Jamais de stroke sur le
+  masque lui-même (non rendu).
+- **Placeholders présentables** : dégradé du preset sur la couche image,
+  pas de gris dashed, pas de label « à compléter » sur la slide — la
+  liste des images à produire vit dans `images-brief.md` (Étape 9ter).
+- **Bleed** : les positions négatives ou dépassant 1920 sont voulues sur
+  certains slots (police, chapitre-typo, hierarchie) si
+  `PRESET.allowBleed` — `clipsContent: true` de la slide rogne proprement.
+  Ne pas « corriger » ces coordonnées en QA.
+- **Fills gradient non bindés** : exception documentée (les dégradés ne
+  peuvent pas être liés aux variables Figma) — au même titre que les
+  shades de la slide 09.
+
+**⑰ Zéro fuite des valeurs d'exemple — le livrable porte le nom du client**
+
+Ce SKILL.md contient des noms et des hex d'exemple (fokusia, Max
+Piccinini / PICCININI, #06211a, #f58220…). Ils servent à illustrer la
+grammaire, **jamais à remplir un livrable**. Le nom affiché partout
+(titre cover, footer, crédits slide 15, brand.md, images-brief.md) est
+`BRAND_NAME`, collecté en A.1.c ou lu dans `brand.md`. Si `BRAND_NAME`
+est vide au moment de générer, **stopper et demander** — ne jamais
+improviser ni recycler un exemple.
+
+Check final (dernier appel `use_figma`, avant le récap) :
+
+```js
+const LEAKS = /fokusia|piccinini/i;
+const leaked = [];
+for (const slide of page.children.filter(c => /^\d{2} ·/.test(c.name))) {
+  slide.findAll(n => n.type === "TEXT" && LEAKS.test(n.characters))
+       .forEach(n => leaked.push(`${slide.name} → "${n.characters.slice(0, 40)}"`));
+}
+// leaked.length > 0 → corriger immédiatement avec BRAND_NAME, re-vérifier
+```
+
+Même vigilance côté fichiers : `brand.md`, `landing-page.md`,
+`images-brief.md` ne doivent contenir aucun nom d'exemple (sauf si le
+client s'appelle vraiment comme ça).
+
 ---
 
 ## Étape 9bis — QA visuelle automatique des 15 slides
@@ -2986,18 +3464,19 @@ le `nodeId` de chaque frame stocké pendant l'Étape 5). Stocker les
 15 screenshots en mémoire — pas besoin de les exposer à l'utilisateur
 sauf si une slide échoue à la QA.
 
-### 9bis.b — Auto-critique sur 5 axes
+### 9bis.b — Auto-critique sur 6 axes
 
 Pour chaque slide, vérifier visuellement (le LLM regarde le screenshot
-et juge) selon **5 axes** :
+et juge) selon **6 axes** :
 
 | Axe | Question concrète | KO si... |
 |---|---|---|
 | 1 · **Débordement de texte** | Est-ce qu'un bloc de texte sort de son conteneur ou est tronqué ? | Texte coupé en bord de frame, ellipsis `…` non voulu, ligne qui sort de la safe zone |
-| 2 · **Contraste** | Le texte principal est-il lisible sur son fond ? | Ratio < AA (4.5:1 pour body, 3:1 pour large text) — typiquement gris sur gris, accent sur primary clair |
+| 2 · **Contraste** | Le texte principal est-il lisible sur son fond (y compris sur les images) ? | Ratio < AA (4.5:1 pour body, 3:1 pour large text) — typiquement gris sur gris, label clair sur image claire sans voile |
 | 3 · **Logo présent & non cassé** | Le logo apparaît-il bien sur slides 01, 06, 15 ? Est-il déformé ou pixelisé ? | Logo absent, étiré, écrasé, mauvaise variante (sombre sur sombre), pixelisation visible |
 | 4 · **Footer cohérent** | Footer présent, aligné, avec bon numéro de slide ? | Footer manquant, désaligné, numéro de slide faux ou en double |
-| 5 · **Slide vide / inutile** | La slide porte-t-elle réellement une information ? | Slide presque vide (1 titre + 1 fond), placeholder `[À COMPLÉTER]` visible, contenu dupliqué d'une autre slide |
+| 5 · **Slide vide / inutile** | La slide porte-t-elle réellement une information ? | Slide presque vide (1 titre + 1 fond), placeholder `[À COMPLÉTER]` visible, nom d'exemple (fokusia, Piccinini) au lieu de `BRAND_NAME`, contenu dupliqué d'une autre slide |
+| 6 · **Slots images (groupe masque)** | Chaque slot attendu (registre Étape 5) est-il un groupe `MoodBoard · <slot>` avec masque + contenu ? | Slot rendu en simple rectangle (pas de masque), groupe manquant, image étirée (cercles → ovales, visages déformés), placeholder gris brut au lieu du dégradé preset, texte rogné car posé DANS le groupe masque |
 
 Format de la sortie interne (utilisée par l'agent — pas montrée à
 l'utilisateur sauf si KO) :
@@ -3024,6 +3503,8 @@ Pour chaque slide KO, **proposer immédiatement un fix** (sans demander
 | Logo absent | Re-tenter le `placeLogo()` avec la variante alternative (image-hash si le node clone a échoué) |
 | Footer KO | Re-injecter le footer depuis le helper commun de l'Étape 6 |
 | Slide vide | Re-générer la slide depuis sa spec à l'Étape 8 |
+| Slot image manquant / déformé | Re-tenter `placeImage()` depuis le registre Étape 5 ; si l'image clonée est déformée, repasser le node en crop FILL ou retomber sur le placeholder dégradé |
+| Label illisible sur image | Insérer un voile `noir` opacité 25% entre l'image et les textes |
 
 Appliquer les fixes via `use_figma` (1 batch de modifications), puis
 **re-screenshoter uniquement les slides corrigées** et re-valider.
@@ -3051,16 +3532,212 @@ le screenshot de la slide problématique à l'utilisateur avec 2 options :
 
 ---
 
+## Étape 9ter — Écrire `images-brief.md` (10 prompts exécutables en direct dans Figma)
+
+**Condition** : au moins un slot rendu en placeholder (la liste
+`PLACEHOLDER_SLOTS` collectée par `placeImage()` est non vide). Si tous
+les slots sont remplis, sauter cette étape.
+
+**Intention** : ce fichier n'est pas un brief abstrait, c'est une
+**liste de 10 prompts prêts à exécuter dans le plugin IA d'image de
+Figma** (le générateur que l'utilisateur a directement dans Figma).
+Chaque prompt est **autoportant** : sujet, composition, orientation et
+direction artistique (palette hex + traitement) sont déjà dans le bloc,
+rien à rajouter. L'utilisateur copie un bloc, le colle dans le plugin,
+génère, et glisse l'image obtenue dans la couche `<slot> · image` du
+groupe masque correspondant (le masque rogne, aucun recrop).
+
+> **Pourquoi 10 et pas 16** (décision 2026-06) : générer 16 images
+> noie l'utilisateur. On priorise les **10 slots qui portent le plus
+> visuellement**, et on regroupe les séries : les 6 `univers-*` =
+> **1 seul prompt-série** (6 variations du même traitement). 10 prompts
+> couvrent tout le poids visuel du deck.
+
+**Les 10 prompts prioritaires** (ordre fixe) :
+
+| # | Slot(s) | Slide | Pourquoi prioritaire |
+|---|---|---|---|
+| 1 | `cover` | 01 | Première impression, pleine hauteur |
+| 2 | `identite` | 03 | Incarne le ton de la marque |
+| 3 | `univers-1…6` *(série)* | 04 | Le moodboard, cœur de l'univers |
+| 4 | `chapitre-logo` | 05 | Ouverture de chapitre, grand format |
+| 5 | `logo-hero` | 06 | Mise en scène du logo |
+| 6 | `chapitre-couleur` | 07 | Bande verticale immersive |
+| 7 | `chapitre-typo` | 10 | Ouverture typo, bleed |
+| 8 | `hierarchie` | 12 | Panneau pleine hauteur |
+| 9 | `chapitre-systeme` | 13 | Ouverture système |
+| 10 | `elements` | 14 | Bandeau panoramique de clôture |
+
+Les slots restants (`sommaire-*`, `nuances`, `police`, `palette-col-*`)
+gardent leur placeholder dégradé : ils sont décoratifs, pas prioritaires.
+Les mentionner en fin de fichier dans une ligne « slots secondaires :
+placeholders conservés, prompts sur demande ».
+
+Structure du fichier :
+
+```markdown
+# Images du brand book · [Nom de la marque]
+
+> 10 prompts prêts à exécuter dans ton plugin IA d'image Figma.
+> Workflow : copier un bloc → coller dans le plugin → générer →
+> glisser l'image sur la couche « <slot> · image » du groupe
+> « MoodBoard · <slot> » (le masque rogne, pas de recrop).
+> Alternative : déposer l'image sur la page Assets, la nommer
+> « IMG · <slot> », relancer le skill en mode BOOK.
+
+## 1 · cover — Couverture (vertical 2:3)
+[Prompt FR autoportant, 2-4 phrases : sujet concret + composition +
+orientation explicite + « Palette : citron #E9F355, vert forêt #334C15,
+ciel #94DFFC sur fonds clairs. Photo éditoriale lumière naturelle,
+mouvement réel, léger grain. »]
+
+## 2 · identite — Identité verbale (portrait 3:4)
+[…]
+
+## 3 · univers (série de 6, paysage 3:2)
+> Génère 6 variations du même traitement, une par sujet :
+> Foulée · Bitume · Lumière · Tracé · Souffle · Arrivée.
+[Prompt de base FR + la liste des 6 sujets]
+
+…(jusqu'à 10)…
+
+---
+Slots secondaires (placeholders dégradés conservés) : sommaire-1…5,
+nuances, police, palette-col-*. Prompts disponibles sur demande.
+```
+
+> **Le `.md` reste écrit** (archive + portabilité hors Figma), mais la
+> surface de travail réelle d'Arnaud est la **frame Figma de l'Étape
+> 9quater** : il lit le prompt sur le canvas, le copie, le colle dans son
+> plugin IA, sans jamais quitter Figma.
+
+Règles d'écriture des prompts :
+- **En français**, 2-4 phrases, sujet concret en premier (« Un escalier
+  urbain gravi par un coureur au lever du jour »), puis composition,
+  puis orientation, puis la DA (palette hex + traitement).
+- **DA bakée dans chaque bloc** : reprendre 2-3 hex de la table Couleurs
+  de `brand.md` + le traitement déduit du preset et de Q13 (photo
+  lumière naturelle / duotone / N&B). Pas de bloc DA séparé à recoller.
+- **Orientation explicite** entre parenthèses dans le titre ET dans le
+  prompt (« cadrage vertical 2:3 ») : avec le masque, la taille pixel
+  n'importe pas, seule l'orientation compte pour bien remplir le slot.
+- **Série univers** : 1 prompt de base + les 6 labels thématiques de la
+  slide 04 (dérivés de Q12) comme variations, « même traitement,
+  série cohérente ».
+- Zéro tiret cadratin (règle d'écriture #1), zéro nom d'exemple
+  (guardrail ⑰).
+
+---
+
+## Étape 9quater — Poser les 10 prompts sur une frame Figma
+
+**Même condition que 9ter** (au moins un slot en placeholder). Après
+avoir écrit `images-brief.md`, **recopier les 10 prompts sur une frame
+Figma** posée à côté de la grille de slides, sur la page `✦ Brand Book`.
+
+> **Pourquoi dans Figma et pas seulement dans le `.md`** (demande Arnaud,
+> 2026-06) : son générateur d'image IA est **dans Figma**. Si les prompts
+> vivent sur une frame du canvas, le cycle complet (lire le prompt →
+> copier → coller dans le plugin → déposer l'image dans le slot masque)
+> se fait sans jamais sortir de Figma. Le `.md` reste écrit pour
+> l'archive et la portabilité, mais la frame est la surface de travail.
+
+**Placement** : la frame `✦ Prompts images` se pose à droite de la grille
+2 colonnes, soit `x = 2 × 2160 = 4320`, `y = 0`. Largeur 1200, hauteur
+auto selon le nombre de cards. Le cleanup ⑫ la préserve explicitement.
+
+**Construction** (dans le dernier appel `use_figma`, après les slides) :
+
+```js
+// PROMPTS : tableau [{ n, slot, orient, body }] des 10 prompts (mêmes
+// textes que images-brief.md). bgPrompts/ink = couleurs lisibles du preset.
+function buildPromptsFrame(page, PROMPTS, C) {
+  let f = page.children.find(n => n.name === "✦ Prompts images");
+  if (f) f.remove();                       // idempotent : on régénère
+  f = figma.createFrame();
+  f.name = "✦ Prompts images";
+  f.x = 4320; f.y = 0;
+  f.fills = solidVar(C.bg);                // fond clair du preset
+  f.layoutMode = "VERTICAL";
+  f.primaryAxisSizingMode = "AUTO";
+  f.counterAxisSizingMode = "FIXED";
+  f.resize(1200, 100);
+  f.paddingTop = f.paddingBottom = 80;
+  f.paddingLeft = f.paddingRight = 80;
+  f.itemSpacing = 24;
+  f.clipsContent = false;
+
+  // Titre
+  const h = figma.createText();
+  h.fontName = FONT_DISPLAY; h.fontSize = 56;
+  h.characters = "Prompts images";
+  h.fills = solidVar(C.ink); f.appendChild(h);
+  const sub = figma.createText();
+  sub.fontName = F.r; sub.fontSize = 17; sub.layoutSizingHorizontal = "FILL";
+  sub.characters = "Copie un bloc, colle-le dans ton plugin IA, génère, "
+    + "puis glisse l'image sur la couche « <slot> · image » du groupe "
+    + "« MoodBoard · <slot> ». Le masque rogne, pas de recrop.";
+  sub.fills = solidVar(C.ink); sub.opacity = 0.75; f.appendChild(sub);
+
+  // 10 cards
+  for (const p of PROMPTS) {
+    const card = figma.createFrame();
+    card.layoutMode = "VERTICAL"; card.itemSpacing = 10;
+    card.paddingTop = card.paddingBottom = 28;
+    card.paddingLeft = card.paddingRight = 28;
+    card.cornerRadius = PRESET.imageRadius;
+    card.fills = solidVar("white");
+    if (PRESET.frame) { card.strokes = solid(COLORS[PRESET.frame.color]); card.strokeWeight = 2; }
+    f.appendChild(card);
+    card.layoutSizingHorizontal = "FILL";
+
+    const head = figma.createText();
+    head.fontName = F.sb; head.fontSize = 15;
+    head.letterSpacing = { value: 1, unit: "PIXELS" };
+    head.characters = `${String(p.n).padStart(2,"0")} · ${p.slot.toUpperCase()} · ${p.orient}`;
+    head.fills = solidVar("primary"); card.appendChild(head);
+
+    const body = figma.createText();
+    body.fontName = F.r; body.fontSize = 18; body.lineHeight = { value: 160, unit: "PERCENT" };
+    body.characters = p.body;            // texte sélectionnable = copiable
+    body.fills = solidVar(C.ink);
+    card.appendChild(body); body.layoutSizingHorizontal = "FILL";
+  }
+  return f;
+}
+```
+
+**Notes d'implémentation** :
+- Auto-layout vertical : la frame grandit toute seule selon le nombre de
+  cards et la longueur des prompts. Pas de calcul de hauteur manuel.
+- Le **texte du body est un node texte normal**, donc sélectionnable et
+  copiable directement dans Figma (double-clic, Cmd+A, Cmd+C).
+- `FONT_DISPLAY` = la famille Display du preset (préchargée Étape 5).
+  `C = { bg, ink }` : un fond clair et une encre lisibles quel que soit
+  le preset (ex Pop : bg `white`, ink `encre`).
+- **Idempotent** : on supprime la frame existante avant de la recréer,
+  comme pour les slides. Le cleanup ⑫ la garde (nom exact
+  `✦ Prompts images`).
+- Si le preset est sombre (Luxe), prendre `bg = primaryDark`, `ink =
+  cream`, cards en `primary` clair : la frame reste lisible.
+
+---
+
 ## Étape 10 — Confirmer et récapituler
 
 ```
 ✦ Brand Book installé pour [Nom de la marque]
 
+Preset visuel : [Luxe éditorial | Minimal tech | Crème organique |
+Pop contrasté | Corporate clair] (dérivé de [réponses clés])
+
 Fichiers générés :
   · brand.md            (source de vérité — tokens + identité verbale + univers)
   · landing-page.md     (structure + copy de landing — template [A|B|C])
+  · images-brief.md     (10 prompts FR prêts à exécuter dans le plugin IA Figma)
 
 Page Figma créée : "✦ Brand Book"
+  · 15 slides + frame "✦ Prompts images" (10 prompts copiables sur le canvas)
 URL : [URL fichier]
 
 15 slides 1920×1280 (tous les libellés Figma sont en français) :
@@ -3079,7 +3756,15 @@ Tokens injectés :
   · Identité verbale (ton, formule, mots, CTAs)  ← visibles slide 03
   · Univers visuel (mood, références, mots-clés) ← visibles slide 04
 
+Images :
+  · [X]/[total] slots remplis depuis les nodes IMG du Figma
+  · [N] slots en placeholder dégradé → prompts dans images-brief.md
+    (générer puis drag-drop sur les nodes "MoodBoard · …")
+
 Prochaine étape suggérée :
+→ Dans Figma : lire un prompt sur la frame "✦ Prompts images", le coller
+  dans ton plugin IA, glisser l'image générée sur la couche
+  "<slot> · image" du groupe masque (le masque rogne, pas de recrop)
 → Relire landing-page.md et compléter témoignages/logos/chiffres clients
 → Déposer les images manquantes dans ./images/ (chemins listés dans la
   section "Données à compléter" du landing-page.md)
@@ -3127,8 +3812,19 @@ existant (les SVG complexes ont souvent plusieurs fills imbriqués).
 
 **Dossier `./images/` vide ou incomplet** — pas bloquant. La landing-page.md
 listera explicitement les chemins manquants dans la section « Données à
-compléter par l'utilisateur ». Le brand book Figma générera la slide 04
-Universe & Mood avec ses blocs colorés par défaut (pas de moodboard photo).
+compléter par l'utilisateur ». (Rappel : `./images/` ne concerne que la
+landing — le brand book Figma se nourrit des nodes `IMG · <slot>`.)
+
+**Aucun node `IMG · <slot>` dans le Figma cible** — cas nominal, pas
+bloquant : tous les slots sont rendus en placeholders dégradés du preset
+et `images-brief.md` fournit les prompts. Le brand book reste présentable
+tel quel (les dégradés sont aux couleurs de la marque, pas des zones
+grises).
+
+**Node `IMG · <slot>` avec un nom de slot inconnu** (ex `IMG · héro`,
+faute de frappe) — signaler au récap (« node IMG · héro ignoré : slot
+inconnu, slots valides : cover, identite, … ») plutôt que d'échouer
+silencieusement.
 
 **brand.md sans formule signature** — utiliser le positionnement ou la
 promesse comme phrase d'exemple dans la slide 10 Type Hierarchy. Pour le
@@ -3156,10 +3852,17 @@ détourné.
 
 La grammaire visuelle (brand book Figma) est **entièrement intégrée à ce SKILL.md** :
 - **Étape 4** : règles de mise en page communes (taille slide, padding,
-  footer, colonne descriptive, chapter openers)
+  footer, slots images, chapter openers)
+- **Étape 4bis** : les 5 presets visuels (Luxe éditorial, Minimal tech,
+  Crème organique, Pop contrasté, Corporate clair) + sélection
+- **Étape 5** : helpers `placeLogo()` / `placeImage()` + registre des
+  16 slots images
 - **Étape 6** : patron commun pour chaque slide (helpers, footer)
 - **Étape 8** : spécifications détaillées par slide (coordonnées x/y,
-  sizing, fonts, fills, structure)
+  sizing, fonts, fills, structure, slots)
+- **Étape 9ter** : génération de `images-brief.md` (10 prompts FR)
+- **Étape 9quater** : frame Figma `✦ Prompts images` (mêmes 10 prompts,
+  copiables sur le canvas pour le plugin IA)
 
 La grammaire de la landing page est dans un fichier de référence séparé :
 - **`references/landing-page-templates.md`** — 3 templates détaillés

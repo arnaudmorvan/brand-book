@@ -212,6 +212,103 @@ Tu peux dupliquer ce dossier comme point de départ pour un projet similaire (se
 
 ---
 
+## Script workshop
+
+Guide pas-à-pas pour animer ou suivre le workshop IA × Branding.
+
+### 3 notions clés
+
+**Le LLM — c'est le cerveau.**
+Il prédit les mots suivants. Il sait presque tout… mais il ne connaît pas ta marque. Il a été entraîné sur des données publiques, pas sur tes intentions ni ton univers. C'est à toi de le nourrir.
+
+**La skill — c'est une compétence.**
+Un ensemble d'instructions pré-configurées pour que l'IA comprenne un contexte précis. La skill brand-book permet à Claude de comprendre ta marque, mémoriser son univers et s'adresser à elle de façon cohérente sur tous les supports.
+
+**Le contexte — c'est la différence.**
+Même question, 5 contextes différents = 5 résultats très différents. Plus tu donnes de contexte, plus l'IA est précise.
+
+---
+
+### Étape 1 — Configuration
+
+**Connecter Figma à Claude**
+Cowork → Customize → Connecteurs → +, taper "Figma", cliquer sur le connecteur, installer l'extension, activer la connexion.
+
+**Créer un projet Cowork**
+Cowork → Nouveau projet → Utiliser un dossier existant. Sélectionner le dossier projet avec logo et images de marque.
+
+**Télécharger le dossier modèle**
+Si l'arborescence n'a pas été préparée en amont : télécharger le zip depuis GitHub, extraire, remplacer les fichiers de logo, sélectionner ce dossier dans Cowork.
+
+**Installer la skill brand-book**
+Customize → Compétences → +, glisser-déposer le fichier `.skill`. La skill apparaît dans la liste des compétences.
+
+**Avant de lancer**
+- Passer sur le modèle **Claude Opus 4.8**
+- Ouvrir le fichier Figma avec le **logo couleur** et le **logo blanc** sur la Page 1
+
+---
+
+### Étape 2 — Lancer le brand book
+
+Dans Figma, copier le lien du fichier. Dans Cowork, bien se placer dans le projet, puis taper :
+
+```
+/brand-book
+```
+
+Claude demande le lien Figma et un texte de contexte sur la marque. Coller le texte récapitulatif préparé en amont — quelques phrases sur l'univers, le ton, qui vous êtes.
+
+---
+
+### Étape 3 — Répondre aux questions
+
+Claude pose trois vagues de questions pour définir l'identité. Plus les réponses sont précises, plus le brand book sera juste. Si toutes les réponses ne sont pas disponibles, répondre avec ce qui est connu — la commande `/brand-book` peut être relancée à tout moment avec des réponses affinées.
+
+---
+
+### Étape 4 — Le fichier brand.md
+
+Claude génère `brand.md` : positionnement, promesse, différenciateur, identité visuelle. Ce fichier est entièrement modifiable. Deux usages possibles : référence interne pour soi-même, ou livrable client supplémentaire (identité formalisée en texte, réutilisable sur tous les supports).
+
+---
+
+### Étape 5 — Générer les images
+
+Claude fournit une liste de **10 prompts prioritaires** construits à partir des réponses — univers visuel, valeurs, ton. Dans Figma : Make → Image, coller un prompt, choisir le moteur. Tester le même prompt avec deux moteurs pour voir lequel correspond le mieux à l'univers. Une fois les images générées, les coller dans les placeholders du brand book via **Cmd+R**.
+
+---
+
+### Étape 6 — Le brand book dans Figma
+
+Claude crée une page "Brand" dans le fichier Figma avec 15 à 17 slides composées à partir des réponses, une palette de couleurs avec des variables Figma (modifier une variable met à jour tout le brand book), la typographie, les nuances, les modes de contraste, et les placeholders images.
+
+---
+
+### Étape 7 — Générer la landing page
+
+Installer la skill **Frontend Design** : Customize → Compétences → +, glisser le fichier `.skill`. Ouvrir un nouveau chat dans Cowork, rester dans le projet, taper :
+
+```
+/frontend-design création de landing page
+```
+
+Claude s'appuie sur `brand.md` et `landing-page.md` pour générer une trame HTML complète.
+
+---
+
+### Étape 8 — Affiner la landing page
+
+Ouvrir le fichier HTML dans Chrome. Pour les ajustements — textes, images, sections — les demander directement à Claude dans le chat. La landing peut être modifiée itérativement sans toucher au code.
+
+---
+
+### Étape 9 — Mettre en ligne avec Netlify
+
+Créer un compte sur [netlify.com](https://netlify.com). Glisser-déposer le dossier projet dans l'interface. Le site est en ligne en quelques secondes avec une URL publique.
+
+---
+
 ## Licence
 
 Skill et code de pipeline · MIT. Cas d'étude fokusia (textes, identité, logo) · propriété d'Isabelle Marques, utilisable uniquement comme référence éditoriale dans le cadre de ce repo.
