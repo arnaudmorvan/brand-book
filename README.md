@@ -89,7 +89,9 @@ Le skill consomme tous ces fichiers automatiquement à la détection.
 
 ### 4. Lancer le skill
 
-Dans Claude (Cowork, Claude Code, ou Claude.ai avec extension), donner :
+**Prérequis** : plugin Figma installé depuis le répertoire Claude (Settings → Répertoire → Plugins → "Figma" → Installer). Ce plugin fournit le connecteur remote Figma MCP avec droits d'écriture — sans lui, Claude ne peut pas créer de frames dans Figma.
+
+Dans Claude (Cowork ou Claude Code), donner :
 
 - L'URL du fichier Figma cible (avec les deux logos `Logo couleur` et `Logo blanc` collés sur Page 1)
 - Le chemin du dossier projet
@@ -232,7 +234,25 @@ Même question, 5 contextes différents = 5 résultats très différents. Plus t
 ### Étape 1 — Configuration
 
 **Connecter Figma à Claude**
-Cowork → Customize → Connecteurs → +, taper "Figma", cliquer sur le connecteur, installer l'extension, activer la connexion.
+Installer le plugin Figma depuis le répertoire Claude. Le plugin installe automatiquement le connecteur remote Figma MCP (avec droits d'écriture). C'est le seul setup nécessaire — pas de manipulation manuelle de connecteurs.
+
+1. Dans la sidebar Cowork, cliquer sur **Customize**
+
+   ![Sidebar Cowork → Customize](docs/images/01-customize.png)
+
+2. Cliquer sur **+** à côté de "Plugins personnels", puis **Parcourir les plugins**
+
+   ![Parcourir les plugins](docs/images/02-parcourir-plugins.png)
+
+3. Chercher "figma" dans le Répertoire → onglet Plugins
+
+   ![Recherche Figma](docs/images/03-recherche-figma.png)
+
+4. Ouvrir la fiche Figma et cliquer **Installer**
+
+   ![Installer le plugin Figma](docs/images/04-installer-figma.png)
+
+Autoriser l'accès Figma dans la fenêtre qui s'ouvre. C'est terminé.
 
 **Créer un projet Cowork**
 Cowork → Nouveau projet → Utiliser un dossier existant. Sélectionner le dossier projet avec logo et images de marque.
